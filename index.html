@@ -21,7 +21,6 @@
   --ink:#2B3A67;
   --ink-soft:#5A6B99;
   --highlight:#FFE566;
-  --leaf:#6BAA75;
   --bear:#3B2A2A;
   --bear-cream:#F0DCC0;
 
@@ -223,7 +222,6 @@ h1,h2{text-wrap:balance}
   padding-bottom:80px;
 }
 .band{padding:clamp(56px,9vw,104px) 0}
-.band--tight{padding-top:clamp(28px,5vw,48px)}
 
 .eyebrow{
   font-family:var(--font-util);
@@ -241,13 +239,16 @@ h1,h2{text-wrap:balance}
 }
 .section-title--gap{margin-bottom:30px}
 
-/* reveal-on-scroll */
+/* Reveal-on-scroll. Uses the `translate` longhand, never `transform`, so a
+   component's own rotate/scale survives the reveal instead of being wiped by
+   a `transform:none`. Anything that sets its own `transition` must list
+   opacity and translate too, or it loses the reveal. */
 .rise{
   opacity:0;
-  transform:translateY(26px);
-  transition:opacity .7s var(--ease-soft),transform .7s var(--ease-soft);
+  translate:0 26px;
+  transition:opacity .7s var(--ease-soft),translate .7s var(--ease-soft);
 }
-.rise.is-in{opacity:1;transform:none}
+.rise.is-in{opacity:1;translate:0 0}
 
 /* ============================================================
    HERO
@@ -330,7 +331,7 @@ h1,h2{text-wrap:balance}
   border-radius:var(--radius);
   box-shadow:var(--shadow-paper);
   overflow:hidden;
-  transform:rotate(-.5deg);
+  rotate:-.5deg;
 }
 .memo__head{
   padding:20px 26px;
@@ -423,7 +424,6 @@ h1,h2{text-wrap:balance}
   list-style:none;
   display:grid;
   gap:2px;
-  counter-reset:none;
 }
 .story li{
   display:grid;
@@ -489,11 +489,15 @@ h1,h2{text-wrap:balance}
   color:var(--ink);
   background:var(--blush);
   box-shadow:var(--shadow-paper);
-  transform:rotate(var(--tilt));
-  transition:transform .3s var(--ease-pop),box-shadow .3s var(--ease-soft);
+  rotate:var(--tilt,0deg);
+  transition:opacity .7s var(--ease-soft),translate .4s var(--ease-pop),
+             rotate .3s var(--ease-pop),scale .3s var(--ease-pop),
+             box-shadow .3s var(--ease-soft);
 }
 .note:hover{
-  transform:rotate(0deg) translateY(-6px) scale(1.03);
+  rotate:0deg;
+  translate:0 -6px;
+  scale:1.03;
   box-shadow:var(--shadow-lift);
 }
 .note::before{ /* tape */
@@ -598,12 +602,15 @@ h1,h2{text-wrap:balance}
   padding:12px 12px 0;
   border-radius:3px;
   box-shadow:var(--shadow-paper);
-  transform:rotate(var(--tilt,-1.6deg));
+  rotate:var(--tilt,-1.6deg);
   position:relative;
-  transition:transform .35s var(--ease-pop),box-shadow .35s var(--ease-soft);
+  transition:opacity .7s var(--ease-soft),translate .5s var(--ease-soft),
+             rotate .35s var(--ease-pop),scale .35s var(--ease-pop),
+             box-shadow .35s var(--ease-soft);
 }
 .snap:hover{
-  transform:rotate(0deg) scale(1.02);
+  rotate:0deg;
+  scale:1.02;
   box-shadow:var(--shadow-lift);
 }
 .snap::before{ /* tape */
@@ -821,7 +828,7 @@ h1,h2{text-wrap:balance}
     transition-duration:.001ms !important;
   }
   .drift{display:none}
-  .rise{opacity:1;transform:none}
+  .rise{opacity:1;translate:0 0}
 }
 </style>
 </head>
@@ -862,7 +869,7 @@ h1,h2{text-wrap:balance}
      ============================================================ -->
 <div class="shell">
 
-  <header class="hero band band--tight">
+  <header class="hero band">
     <p class="eyebrow rise">Happy Girlfriend Day</p>
     <h1 class="hero__name rise"><em>Sloth Bear</em></h1>
     <p class="hero__sub rise">
@@ -959,7 +966,7 @@ h1,h2{text-wrap:balance}
       <li class="rise">
         <span class="story__dot" aria-hidden="true"></span>
         <p class="story__when">Somewhere in between</p>
-        <p class="story__what">Games, cafés, <em>kisi bhi bahane</em>. I stopped bothering with reasons to be wherever you were. We also stopped pretending. Mostly.</p>
+        <p class="story__what">Games, cafés, <em>kisi bhi bahane</em>. I stopped bothering with excuses to be wherever you were. We also stopped pretending. Mostly.</p>
       </li>
       <li class="rise">
         <span class="story__dot" aria-hidden="true"></span>
@@ -1031,7 +1038,7 @@ h1,h2{text-wrap:balance}
       </li>
     </ul>
       <figure class="snap rise" style="--tilt:2deg" data-snap>
-        <img src="photos/her.jpg" alt="You, in the magenta saree, laughing" width="900" height="1200" loading="lazy" decoding="async">
+        <img src="photos/her.jpg" alt="You in the magenta saree, smiling over your shoulder" width="900" height="1200" loading="lazy" decoding="async">
         <figcaption>this one. exactly this one. 💗</figcaption>
       </figure>
     </div>
@@ -1067,6 +1074,10 @@ h1,h2{text-wrap:balance}
   // generates the body element itself rather than using ours.
   document.body.classList.add("is-locked");
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // declared up here because the keydown handler below reads bloomEl
+  var bloomEl = document.getElementById("bloom");
+  var stageEl = document.getElementById("bloomStage");
 
   /* ---------- ambient petals + hearts ---------- */
   var CHARMS = ["🌸","💗","🌷","💕","🌺","🤍","🌼","💐"];
@@ -1198,9 +1209,10 @@ h1,h2{text-wrap:balance}
   var hint = document.getElementById("memoHint");
   var opened = 0;
 
-  redacts.forEach(function(btn){
+  redacts.forEach(function(btn, idx){
     var words = btn.textContent.trim();
-    btn.setAttribute("aria-label", "Declassify redacted text");
+    // each gets its own name; five identical labels would be unnavigable by voice
+    btn.setAttribute("aria-label", "Declassify redacted line " + (idx + 1) + " of " + redacts.length);
     btn.addEventListener("click", function(){
       if (btn.classList.contains("is-open")) return;
       btn.classList.add("is-open");
@@ -1238,8 +1250,6 @@ h1,h2{text-wrap:balance}
 
   /* ---------- the spiral bloom ---------- */
   var BLOOMS = ["🌸","🌺","🌷","🌻","💐","🌹","🏵️","🌼"];
-  var bloomEl = document.getElementById("bloom");
-  var stageEl = document.getElementById("bloomStage");
 
   // crochet blooms in assorted yarn colours: [petal, outline, centre, stitches]
   var YARN = [
@@ -1437,7 +1447,6 @@ h1,h2{text-wrap:balance}
       var cap = 40;
       f.vx = stale ? 0 : Math.max(-cap, Math.min(cap, f.tvx));
       f.vy = stale ? 0 : Math.max(-cap, Math.min(cap, f.tvy));
-      f.vrot = f.vx * 0.4;
     }
     f.el.addEventListener("pointerup", release);
     f.el.addEventListener("pointercancel", release);
