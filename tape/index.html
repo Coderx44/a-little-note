@@ -57,6 +57,29 @@ body::after{
 }
 .stage,.gate,.tab,.drawer,.toast{position:fixed}
 .stage{z-index:2}
+/* Miniatures of the deck itself, drifting up behind it — the same idea as the
+   floaters on a-little-question, at the same sort of size. Never interactive:
+   the canvas owns dragging, and a charm that stole a drag would cost more than
+   it adds. They pass behind the deck because the canvas sits above them. */
+.charms{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.charms[hidden]{display:none}
+.charm{position:absolute;left:var(--x);bottom:0;width:var(--s);opacity:0;
+  animation:charmRise var(--d) linear infinite;
+  animation-delay:calc(var(--i) * var(--d) / -6)}
+.charm i{display:block;transform-origin:50% -12%;
+  animation:charmSwing calc(var(--d) / 4) ease-in-out infinite alternate}
+/* the ring it hangs from, overlapping the shell so it reads as attached */
+.charm i::before{content:"";display:block;width:19%;aspect-ratio:1;margin:0 auto -9%;
+  border:1.5px solid rgba(184,142,134,.85);border-radius:50%}
+.charm img{display:block;width:100%;height:auto}
+@keyframes charmRise{
+  0%   {translate:0 20vh;   opacity:0}
+  12%  {opacity:var(--o)}
+  88%  {opacity:var(--o)}
+  100% {translate:var(--sway) -110vh; opacity:0}
+}
+@keyframes charmSwing{from{rotate:calc(var(--r) * -1)}to{rotate:var(--r)}}
+@media (prefers-reduced-motion:reduce){ .charm{animation:none;opacity:var(--o);bottom:auto;top:18%} .charm i{animation:none} }
 button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,107,157,.24)}
 svg{display:block;max-width:100%}
 h1,h2{text-wrap:balance}
@@ -323,6 +346,16 @@ body{overflow:hidden}
 </div>
 
 <!-- ============ MAIN ============ -->
+<!-- little ones of the same deck, drifting up behind it -->
+<div class="charms" id="charms" aria-hidden="true" hidden>
+  <span class="charm" style="--x:8%;--s:34px;--o:.54;--d:19s;--i:0;--sway:16px;--r:7deg"><i><img src="charm.png" alt=""></i></span>
+  <span class="charm" style="--x:24%;--s:26px;--o:.46;--d:24s;--i:1;--sway:-13px;--r:6deg"><i><img src="charm.png" alt=""></i></span>
+  <span class="charm" style="--x:41%;--s:30px;--o:.44;--d:16s;--i:2;--sway:11px;--r:8deg"><i><img src="charm.png" alt=""></i></span>
+  <span class="charm" style="--x:58%;--s:22px;--o:.50;--d:27s;--i:3;--sway:-17px;--r:5deg"><i><img src="charm.png" alt=""></i></span>
+  <span class="charm" style="--x:74%;--s:38px;--o:.50;--d:21s;--i:4;--sway:14px;--r:7deg"><i><img src="charm.png" alt=""></i></span>
+  <span class="charm" style="--x:90%;--s:28px;--o:.45;--d:25s;--i:5;--sway:-12px;--r:6deg"><i><img src="charm.png" alt=""></i></span>
+</div>
+
 <main class="stage" id="main" hidden>
   <div class="topbar">
     <span class="sync"><span class="dot" id="syncDot"></span><span id="syncTxt">Local only</span></span>
@@ -564,12 +597,18 @@ var sync = {
 };
 function setSync(cls,txt){ $("syncDot").className="dot "+cls; $("syncTxt").textContent=txt; }
 // Health of the whole tape, not just the side we happened to check last.
+// a take that exists here but has no remote revision yet has not gone anywhere
+function unsent(){
+  for(var i=0;i<TAPE[me].length;i++) if(TAPE[me][i] && !TAPE[me][i].arev) return true;
+  return false;
+}
 function syncOk(){
   // Both sides are pulled at once. Whichever finished first used to get the
   // last word, so an empty side B announced an empty tape while side A was
   // still downloading — the one message you must not get wrong.
   if(inflight.A || inflight.B) return;
   if(pullErr.A || pullErr.B){ setSync("err","Offline"); return; }
+  if(unsent()){ setSync("err","Not sent yet"); return; }
   var any = TAPE.A.some(Boolean) || TAPE.B.some(Boolean);
   setSync("ok", any ? "In sync" : "Nothing yet");
 }
@@ -586,8 +625,11 @@ async function latestRev(side, from){
   for(var guard=0; guard<64; guard++){
     var probe = [];
     for(var k=1;k<=STEP;k++) probe.push(lo+k);
+    // sync.get already returns null for a genuine "not there" and throws for a
+    // failed request. Catching here collapsed the two, so a dead network read as
+    // "no newer revisions" and the tape claimed to be up to date while offline.
     var hits = await Promise.all(probe.map(function(r){
-      return manAt(side,r).then(function(x){ return !!x; }, function(){ return false; });
+      return manAt(side,r).then(function(x){ return !!x; });
     }));
     var n=0; while(n<hits.length && hits[n]) n++;
     lo += n;
@@ -627,8 +669,8 @@ async function pushSide(side){
       pending.forEach(function(i){ if(TAPE[side][i]) TAPE[side][i].arev = 0; });
       REV[side] = await latestRev(side, REV[side]);
     }
-    setSync("err","Will retry");
-  }catch(e){ setSync("err","Will retry"); }
+    setSync("err","Not sent yet");
+  }catch(e){ setSync("err","Not sent yet"); }
 }
 
 var inflight = { A:false, B:false }, pullErr = { A:false, B:false };
@@ -1241,7 +1283,7 @@ $("enter").addEventListener("click", async function(){
   }
   await put("meta","word", id);
   $("gateErr").hidden=true;
-  $("gate").hidden=true; $("main").hidden=false;
+  $("gate").hidden=true; $("main").hidden=false; $("charms").hidden=false;
   setView(view);
   reels(0); render();
   if(sync.on()){ setSync("busy","Checking…"); await pullSide("A"); await pullSide("B"); }
@@ -1259,6 +1301,20 @@ function setView(v){
   render();
   if(sync.on()) pullSide(v);
 }
+/* One failed request used to latch the indicator red until you flipped the tape
+   or reloaded — so walking into a lift left it wrong for the rest of the
+   session even after the signal came back. These are the moments worth
+   re-checking on, plus a slow loop while something is actually unresolved. */
+function resync(){
+  if(!sync.on() || document.hidden) return;
+  pullSide("A"); pullSide("B");          // inflight guards stop these piling up
+  if(unsent()) pushSide(me);
+}
+function stuck(){ return pullErr.A || pullErr.B || unsent(); }
+addEventListener("online", resync);
+document.addEventListener("visibilitychange", function(){ if(!document.hidden) resync(); });
+setInterval(function(){ if(stuck()) resync(); }, 60000);
+
 $("knob").addEventListener("click", function(){
   // No deck lets you turn the tape over mid-take. Here it would also leave the
   // screen showing one side while the mic is pointed at the other.
