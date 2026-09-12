@@ -116,6 +116,11 @@ input:focus{outline:none;border-color:var(--rose)}
 .hint{margin:8px 0 16px;font-size:12.5px;line-height:1.5;color:var(--ink-soft)}
 .gateErr{margin:0 0 14px;font-size:13px;line-height:1.45;color:var(--berry);
   background:#FFF0F4;border-radius:12px;padding:11px 14px;text-align:left}
+.gateErr__go{display:block;width:100%;margin:10px 0 0;border:0;cursor:pointer;
+  background:var(--berry);color:#fff;font-size:13.5px;font-weight:600;
+  padding:10px 12px;border-radius:10px}
+.gateErr__go:hover{background:#9C1D4E}
+.gateErr__sub{display:block;margin-top:7px;font-size:11.5px;color:#A8737F}
 .go{width:100%;border:0;cursor:pointer;background:var(--rose);color:#fff;font-size:16px;font-weight:600;
   padding:14px;border-radius:12px;box-shadow:0 5px 0 var(--berry);transition:background .2s,translate .12s,box-shadow .12s}
 .go:hover{background:#FF5A92}
@@ -480,6 +485,7 @@ function tx(store,mode,fn){
 }
 var put = function(store,k,v){ return tx(store,"readwrite",function(s){ return s.put(v,k); }); };
 var get = function(store,k){ return tx(store,"readonly",function(s){ return s.get(k); }); };
+var clearStore = function(store){ return tx(store,"readwrite",function(s){ return s.clear(); }); };
 
 /* ================= tape state ================= */
 // tracks[side][i] = { title, dur, size, mime, at } ; audio lives in IndexedDB
@@ -1274,10 +1280,26 @@ $("enter").addEventListener("click", async function(){
   await loadTape();
   var id = await pathFor("word.v1"), known = await get("meta","word");
   if(known && known !== id && (TAPE.A.some(Boolean) || TAPE.B.some(Boolean))){
-    $("gateErr").textContent = "That's not the word this tape was made with. "+
-      "Your recordings are safe on this phone — check the spelling and try again.";
+    // Refusing outright was a dead end: a phone that already had recordings
+    // could never accept a different word, so there was no way to start over
+    // short of clearing the browser's site data by hand.
+    $("gateErr").innerHTML =
+      "That's not the word this tape was made with. Check the spelling and " +
+      "try again \u2014 your recordings are safe on this phone." +
+      "<button class=\"gateErr__go\" id=\"freshTape\" type=\"button\">" +
+      "Start a fresh tape with this word</button>" +
+      "<span class=\"gateErr__sub\">Clears this phone. Anything already synced " +
+      "comes back if you enter the old word.</span>";
     $("gateErr").hidden=false;
     $("enter").disabled=false; $("enter").textContent="Load the tape 🎧";
+    $("freshTape").addEventListener("click", async function(){
+      await clearStore("blobs"); await clearStore("meta");
+      TAPE={A:[],B:[]}; REV={A:0,B:0};
+      HEARD={A:[],B:[]}; REACT={A:[],B:[]}; THEIRS=[]; THEIRR=[];
+      RECENT=SEED_FACES.slice(); armed=-1;
+      $("gateErr").hidden=true;
+      $("enter").click();                 // nothing left to guard against now
+    });
     $("pass").focus(); $("pass").select();
     return;
   }
