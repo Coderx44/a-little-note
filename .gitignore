@@ -1,1 +1,7 @@
 .DS_Store
+
+# working files, never the site
+TASKS.md
+reel-lab.html
+recording-script.md
+req.md

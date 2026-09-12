@@ -1,0 +1,2020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Our Mixtape 🎧</title>
+<meta name="description" content="A tape that goes back and forth.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#FFF8F3">
+<!-- Installable on purpose, not for polish: iOS clears IndexedDB for sites that
+     have not been opened in 7 days, and an installed one is exempt. Added to the
+     home screen it also keeps its own storage and loses the browser chrome. -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mixtape">
+<style>
+:root{
+  --paper:#FFF8F3; --paper-deep:#FFEDE4; --blush:#FFD9E4;
+  --rose:#FF6B9D; --berry:#B4235C; --ink:#2B3A67; --ink-soft:#5A6B99;
+  --highlight:#FFE566;
+  --shell:#EBD9C4; --shell-deep:#D9C2A8; --tape:#4A3535;
+  --font-script:"Snell Roundhand","Apple Chancery","Brush Script MT",cursive;
+  --font-hand:"Bradley Hand","Chalkboard SE","Comic Sans MS",cursive;
+  --font-body:"Avenir Next","Avenir","Segoe UI",system-ui,-apple-system,sans-serif;
+  --font-util:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --shadow-paper:0 1px 2px rgba(43,58,103,.08),0 8px 24px -8px rgba(43,58,103,.18);
+  --shadow-lift:0 2px 4px rgba(43,58,103,.10),0 18px 40px -12px rgba(180,35,92,.28);
+  --ease-soft:cubic-bezier(.22,.61,.36,1);
+  --ease-pop:cubic-bezier(.34,1.56,.64,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;color-scheme:light;background:var(--paper)}
+body{
+  margin:0;min-height:100vh;font-family:var(--font-body);color:var(--ink);line-height:1.55;
+  background:
+    radial-gradient(660px 520px at 50% 40%, #FFFCF7 0%, rgba(255,252,247,.62) 40%, rgba(255,252,247,0) 74%),
+    radial-gradient(1000px 520px at 50% 108%, rgba(197,150,163,.55) 0%, rgba(197,150,163,0) 66%),
+    radial-gradient(760px 460px at 88% -12%, rgba(255,197,216,.75) 0%, rgba(255,197,216,0) 64%),
+    linear-gradient(180deg, #F7DFE4 0%, #FFF6F1 44%, #FBE6E6 74%, #EBCBD2 100%);
+  background-attachment:fixed;
+  overflow-x:hidden;
+}
+/* paper fibre, so the ground is a surface rather than a fill */
+body::before{
+  content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.11'/%3E%3C/svg%3E");
+}
+/* and a soft edge, so the eye lands on the deck and not the corners */
+body::after{
+  content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+  box-shadow:inset 0 0 190px 54px rgba(150,105,118,.20);
+}
+.stage,.gate,.tab,.drawer,.toast{position:fixed}
+.stage{z-index:2}
+button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,107,157,.24)}
+svg{display:block;max-width:100%}
+h1,h2{text-wrap:balance}
+:focus-visible{outline:3px solid var(--berry);outline-offset:3px;border-radius:8px}
+
+.wrap{width:min(760px,calc(100% - 32px));margin:0 auto;padding:clamp(26px,6vw,54px) 0 70px}
+.eyebrow{font-family:var(--font-util);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--berry);margin:0 0 10px}
+
+/* ---------- gate ---------- */
+.gate{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:24px;
+  background:rgba(43,58,103,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);overscroll-behavior:contain}
+.gate[hidden]{display:none}
+.card{width:min(400px,100%);background:#fff;border-radius:18px;padding:26px 24px 24px;
+  box-shadow:0 30px 80px -20px rgba(43,58,103,.5);animation:cardIn .5s var(--ease-pop) both}
+@keyframes cardIn{from{opacity:0;translate:0 16px;scale:.97}to{opacity:1;translate:0 0;scale:1}}
+.card h1{margin:0 0 6px;font-family:var(--font-script);font-size:36px;
+  font-weight:600;letter-spacing:0;line-height:1}
+.card p.sub{margin:0 0 18px;color:var(--ink-soft);font-size:14.5px;line-height:1.5}
+.gateFoot{margin:16px 0 2px;text-align:center;font-family:var(--font-script);
+  font-size:19px;line-height:1.3;color:var(--berry)}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.who button{border:2px solid var(--blush);background:var(--paper);border-radius:14px;padding:13px 8px;cursor:pointer;
+  font-weight:600;font-size:15px;transition:border-color .2s,background .2s,scale .2s var(--ease-pop)}
+.who button[aria-pressed="true"]{border-color:var(--rose);background:var(--blush)}
+.who__e{display:block;font-style:normal;font-size:22px;line-height:1;margin-bottom:4px}
+.who button:hover{scale:1.02}
+.who small{display:block;font-family:var(--font-util);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-soft);margin-top:3px}
+label.fld{display:block;font-family:var(--font-util);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-soft);margin:0 0 6px}
+input[type=password],input[type=text]{width:100%;font:inherit;padding:12px 14px;border-radius:12px;
+  border:2px solid var(--blush);background:var(--paper);color:var(--ink)}
+input:focus{outline:none;border-color:var(--rose)}
+.hint{margin:8px 0 16px;font-size:12.5px;line-height:1.5;color:var(--ink-soft)}
+.gateErr{margin:0 0 14px;font-size:13px;line-height:1.45;color:var(--berry);
+  background:#FFF0F4;border-radius:12px;padding:11px 14px;text-align:left}
+.go{width:100%;border:0;cursor:pointer;background:var(--rose);color:#fff;font-size:16px;font-weight:600;
+  padding:14px;border-radius:12px;box-shadow:0 5px 0 var(--berry);transition:background .2s,translate .12s,box-shadow .12s}
+.go:hover{background:#FF5A92}
+.go:active{translate:0 4px;box-shadow:0 1px 0 var(--berry)}
+.go[disabled]{opacity:.5;cursor:not-allowed;box-shadow:0 5px 0 var(--berry)}
+
+
+
+
+
+/* ================= one screen, the object owns it ================= */
+html,body{height:100%}
+body{overflow:hidden}
+.stage{
+  position:fixed; inset:0; display:grid; place-items:center;
+  /* an explicit full-width column: without it the track sizes to its content
+     and everything drifts left of centre */
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto 1fr auto; padding:0;
+}
+.stage[hidden]{display:none}
+.topbar{
+  grid-row:1; grid-column:1; align-self:start; justify-self:stretch;
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:14px 18px; font-family:var(--font-util); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+}
+.sync{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+  color:var(--ink-soft);background:rgba(255,255,255,.72);padding:6px 12px;border-radius:999px;
+  box-shadow:0 2px 6px rgba(93,52,58,.14)}
+#syncTxt{white-space:nowrap}
+/* the two pills and the tab all have to hold one line on a small phone */
+@media (max-width:430px){
+  .topbar{padding:12px 12px;font-size:9px;letter-spacing:.1em;gap:8px}
+  .sync,.sidepill{padding:5px 9px;gap:5px}
+  .tab{font-size:9px;letter-spacing:.1em;padding:11px 16px 13px;gap:8px}
+}
+.sidepill{white-space:nowrap;color:var(--berry);background:rgba(255,255,255,.72);padding:6px 12px;border-radius:999px;
+  box-shadow:0 2px 6px rgba(93,52,58,.14)}
+.rec{grid-row:2; grid-column:1; position:relative; width:min(720px,95vw); max-width:none;
+  aspect-ratio:4/5; height:auto; max-height:100%; min-height:0; margin:0 auto}
+/* absolutely positioned, not height:100%: a canvas carries an intrinsic aspect
+   ratio from its width/height attributes, and a percentage height loses to it */
+#stage{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+/* The real controls. Off-screen for sighted users — the 3D keys forward to them —
+   but reachable by keyboard, and they surface when focused. */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.sr button:focus-visible{position:fixed;top:12px;left:12px;width:auto;height:auto;clip-path:none;
+  background:#fff;color:var(--ink);padding:10px 16px;border-radius:10px;z-index:70;
+  box-shadow:0 6px 18px rgba(93,52,58,.3)}
+.mini{border:0;cursor:pointer;border-radius:999px;font-size:13.5px;font-weight:600;padding:10px 20px;
+  background:#fff;color:#8A5A62;box-shadow:0 3px 10px rgba(93,52,58,.22);transition:scale .2s var(--ease-pop)}
+.mini--go{background:var(--rose);color:#fff}
+.mini--warn{background:var(--berry);color:#fff}
+.mini:hover{scale:1.04}
+#stage.grabbing{cursor:grabbing}
+.decide{grid-row:3; grid-column:1; align-self:end; display:flex; gap:10px; justify-content:center;
+  flex-wrap:wrap; min-height:0; margin-bottom:52px}
+.hint3d{
+  grid-row:3; grid-column:1; align-self:end; justify-self:center; margin:0 0 62px;
+  font-family:var(--font-util); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-soft); opacity:.62; transition:opacity .5s; pointer-events:none;
+}
+.hint3d.gone{opacity:0}
+/* ---- the tab, like a J-card poking out ---- */
+.tab{
+  /* A fixed box with only `left` set shrinks to fit inside (viewport - left) —
+     half the screen at left:50% — so the label wrapped onto three lines as soon
+     as the counts grew. max-content opts out of that cap. */
+  position:fixed; left:50%; bottom:0; translate:-50% 0; z-index:20;
+  width:max-content; max-width:calc(100vw - 20px); white-space:nowrap;
+  display:flex; align-items:center; gap:10px; cursor:pointer; border:0;
+  padding:11px 22px 13px; border-radius:14px 14px 0 0;
+  background:linear-gradient(#fffdfa,#fdeee7);
+  box-shadow:0 -2px 0 rgba(255,255,255,.9), 0 -8px 22px -8px rgba(93,52,58,.35);
+  font-family:var(--font-util); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink);
+  transition:translate .3s var(--ease-pop), background .2s, opacity .25s;
+}
+.tab.open{opacity:0;pointer-events:none;translate:-50% 10px}
+.tab:hover{translate:-50% -3px}
+.tab__n{color:var(--ink-soft)}
+.tab__c{color:var(--berry);transition:rotate .3s var(--ease-pop)}
+.tab.open .tab__c{rotate:180deg}
+/* ---- drawer ---- */
+.drawer{
+  position:fixed; left:0; right:0; bottom:0; z-index:19;
+  max-height:min(74vh,560px); overflow-y:auto; overscroll-behavior:contain;
+  padding:38px clamp(16px,4vw,28px) 32px;
+  background:linear-gradient(#fffdfa 0%,#fff6f0 100%);
+  border-radius:20px 20px 0 0;
+  box-shadow:0 -10px 40px -12px rgba(93,52,58,.42);
+  translate:0 100%; transition:translate .38s var(--ease-soft);
+}
+.drawer.open{translate:0 0}
+/* a 5px bar is not a tap target; the bar is decoration inside a real one */
+.drawer__grip{
+  position:absolute; top:4px; left:50%; translate:-50% 0;
+  width:130px; height:28px; border:0; padding:0; cursor:pointer;
+  background:transparent; display:grid; place-items:center;
+}
+.drawer__grip::before{
+  content:""; width:46px; height:5px; border-radius:3px; background:#EBD3CB;
+  transition:background .2s, width .2s var(--ease-pop);
+}
+.drawer__grip:hover::before{background:var(--rose); width:58px}
+.tip{margin:16px 0 0;text-align:center;font-family:var(--font-util);font-size:10.5px;
+  letter-spacing:.08em;color:#B0A39C}
+.tip b{color:var(--berry);font-weight:600}
+.drawer .bar{display:flex;gap:10px;justify-content:center;margin-top:18px}
+.drawer .foot{text-align:center;margin:14px 0 0;font-family:var(--font-script);
+  font-size:22px;color:var(--berry);line-height:1.1}
+@media (max-width:520px){
+  .rec{width:96vw}
+  .hint3d{margin-bottom:58px}
+}
+
+/* ---------- cassette ---------- */
+
+
+.readout{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;
+  font-family:var(--font-util);font-size:12px;letter-spacing:.1em;color:var(--ink-soft)}
+.counter{font-size:19px;letter-spacing:.06em;color:var(--ink);font-variant-numeric:tabular-nums}
+.counter.warn{color:#B5761E}
+.sizeread{font-size:11px}
+
+/* ---------- controls ---------- */
+.btn{border:0;cursor:pointer;border-radius:999px;font-weight:600;font-size:15px;padding:12px 22px;
+  background:var(--paper-deep);color:var(--ink);transition:background .2s,scale .2s var(--ease-pop)}
+.btn:hover{scale:1.03}
+.btn--rec{background:var(--berry);color:#fff}
+.btn--go{background:var(--rose);color:#fff}
+.btn--ghost{background:transparent;color:var(--ink-soft);box-shadow:inset 0 0 0 2px var(--blush)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;scale:1}
+
+/* ---------- sides + tracklist ---------- */
+
+.list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.trk{display:grid;grid-template-columns:30px 1fr auto;gap:12px;align-items:center;
+  background:#fff;border-radius:12px;padding:12px 14px;box-shadow:var(--shadow-paper);
+  rotate:var(--tilt,0deg);transition:box-shadow .25s var(--ease-soft),scale .25s var(--ease-pop)}
+.trk:hover{box-shadow:var(--shadow-lift)}
+.trk.on{box-shadow:0 0 0 2px var(--rose),var(--shadow-lift)}
+.trk.armed{box-shadow:0 2px 10px rgba(93,52,58,.10), inset 0 0 0 2px var(--rose)}
+.trk.armed .trk__no{color:var(--berry)}
+.trk--add{background:rgba(255,255,255,.62)}
+.trk__no{font-family:var(--font-util);font-size:12px;color:var(--ink-soft)}
+.trk__ttl{font-family:var(--font-hand);font-size:17px;margin:0;min-width:0;overflow-wrap:anywhere}
+.trk__ttl.empty{color:#C3B7AE;font-style:italic}
+.trk__len{font-family:var(--font-util);font-size:11px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.trk__sub{display:block;font-family:var(--font-util);font-size:10px;letter-spacing:.06em;
+  color:#B0A39C;margin-top:3px}
+.trk__seen{font-weight:600;color:var(--rose)}
+.trk__got{font-size:14px;line-height:1;vertical-align:-2px}
+.trk__act--react{background:transparent;box-shadow:inset 0 0 0 1.5px var(--blush);
+  color:var(--ink-soft);font-size:15px;line-height:1}
+.trk__act--react.on{box-shadow:inset 0 0 0 1.5px var(--rose);background:#fff}
+.trk__act--react:hover{background:var(--blush)}
+/* the picker drops under the row it belongs to, across all three columns */
+.faces{grid-column:1/-1;display:flex;gap:6px;justify-content:flex-end;
+  margin:10px 0 0;padding-top:9px;border-top:1px dashed var(--blush)}
+.faces__b{border:0;background:var(--paper-deep);border-radius:999px;cursor:pointer;
+  width:38px;height:38px;font-size:18px;line-height:1;
+  transition:scale .18s var(--ease-pop),background .18s}
+.faces__b:hover{scale:1.14}
+.faces__b.on{background:var(--blush);box-shadow:inset 0 0 0 2px var(--rose)}
+.faces__any{color:var(--ink-soft);font-size:20px;font-weight:600;
+  background:transparent;box-shadow:inset 0 0 0 1.5px var(--blush)}
+.faces__any:hover{background:var(--blush)}
+.faces__in{width:64px;height:38px;text-align:center;font-size:18px;padding:0;
+  border:0;border-radius:999px;background:var(--blush);color:var(--ink)}
+.faces__in:focus{outline:2px solid var(--rose);outline-offset:1px}
+.trk__new{font-family:var(--font-util);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  background:var(--rose);color:#fff;border-radius:999px;padding:3px 8px}
+.trk.fresh{box-shadow:0 2px 10px rgba(180,35,92,.16), inset 0 0 0 2px var(--blush)}
+.tab__new{font-size:9.5px;letter-spacing:.12em;background:var(--rose);color:#fff;
+  border-radius:999px;padding:3px 8px}
+.tab.has-new{background:linear-gradient(#fffdfa,#ffe6ef)}
+.trk__act{border:0;background:var(--blush);cursor:pointer;width:38px;height:38px;border-radius:50%;
+  display:grid;place-items:center;font-size:15px;transition:background .2s,scale .2s var(--ease-pop)}
+.trk__act:hover{background:var(--rose);color:#fff;scale:1.08}
+/* re-record is destructive, so it never wears the same face as play */
+.trk__act--re{background:transparent;box-shadow:inset 0 0 0 1.5px var(--blush);color:var(--berry);font-size:11px}
+.trk__act--re:hover{background:var(--berry);box-shadow:inset 0 0 0 1.5px var(--berry);color:#fff}
+.trk input.lbl{font-family:var(--font-hand);font-size:17px;border:0;border-bottom:2px dashed var(--blush);
+  background:transparent;padding:2px 0;width:100%}
+.trk input.lbl:focus{outline:none;border-bottom-color:var(--rose)}
+
+/* ---------- footer bits ---------- */
+.bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:26px}
+.dot{width:7px;height:7px;border-radius:50%;background:#C3B7AE}
+.dot.ok{background:#6BAA75}.dot.busy{background:var(--highlight)}.dot.err{background:var(--berry)}
+.foot{text-align:center;margin-top:30px}
+.foot p{margin:0}
+.foot .script{font-family:var(--font-script);font-size:clamp(24px,5vw,36px);color:var(--berry);line-height:1.1}
+.note{font-family:var(--font-util);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-top:8px}
+.toast{position:fixed;left:50%;top:58px;translate:-50% 0;background:var(--ink);color:#fff;
+  padding:11px 18px;border-radius:999px;font-size:14px;z-index:60;opacity:0;pointer-events:none;transition:opacity .3s}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ GATE ============ -->
+<div class="gate" id="gate">
+  <div class="card">
+    <p class="eyebrow">Side A · Side B</p>
+    <h1>Our mixtape</h1>
+    <p class="sub">All the things I don't get to say before you go.
+      Say yours back.</p>
+
+    <label class="fld">Who's holding it?</label>
+    <div class="who" id="who">
+      <button type="button" data-side="A" aria-pressed="false"><i class="who__e">🐼</i>Boo Boo<small>Side A</small></button>
+      <button type="button" data-side="B" aria-pressed="false"><i class="who__e">🐻</i>Sloth Bear<small>Side B</small></button>
+    </div>
+
+    <label class="fld" for="pass">The word</label>
+    <input id="pass" type="password" autocomplete="off" spellcheck="false" placeholder="you know the one">
+    <p class="hint">It scrambles every recording before it leaves your phone.
+      Same word on both sides, or the tapes can't hear each other.</p>
+
+    <p class="gateErr" id="gateErr" hidden></p>
+    <button class="go" id="enter" type="button" disabled>Load the tape 🎧</button>
+    <p class="gateFoot">Whenever you miss me, press play.<br>I'll be on Side A.</p>
+  </div>
+</div>
+
+<!-- ============ MAIN ============ -->
+<main class="stage" id="main" hidden>
+  <div class="topbar">
+    <span class="sync"><span class="dot" id="syncDot"></span><span id="syncTxt">Local only</span></span>
+    <span class="sidepill" id="sidePill">SIDE A</span>
+  </div>
+
+  <div class="rec" id="deck">
+    <canvas id="stage"></canvas>
+    <div class="sr">
+      <button id="btnRec" type="button">Record</button>
+      <button id="btnPlay" type="button">Play back</button>
+      <button id="btnPause" type="button">Pause</button>
+      <button id="btnStop" type="button">Stop</button>
+      <button id="knob" type="button" aria-label="Flip to side B">Flip the tape</button>
+      <span id="stateTxt">READY</span><span id="counter">00:00</span><span id="sizeTxt"></span>
+      <span id="labTop">Our mixtape</span><span id="labSub">side a · track 1</span>
+      <span id="sideLbl">SIDE A</span><i id="recDot"></i>
+      <span id="cardA"></span><span id="cardB"></span>
+    </div>
+  </div>
+
+  <div class="decide" id="decide">
+    <button class="mini mini--go" id="btnKeep" type="button" hidden>Keep it</button>
+    <button class="mini" id="btnScrap" type="button" hidden>Scrap</button>
+    <button class="mini mini--warn" id="btnYes" type="button" hidden>Yes</button>
+    <button class="mini" id="btnNo" type="button" hidden>Leave it</button>
+  </div>
+
+  <p class="hint3d" id="hint3d">drag to turn it over · tap a key</p>
+
+  <button class="tab" id="tabTracks" type="button" aria-expanded="false" aria-controls="drawer">
+    <span class="tab__new" id="tabNew" hidden></span><span class="tab__n" id="tabCount">6 empty</span><span class="tab__t">Tracklist</span><span class="tab__c">⌃</span>
+  </button>
+
+  <section class="drawer" id="drawer" aria-label="Tracklist" inert>
+    <button class="drawer__grip" id="drawerClose" type="button" aria-label="Close tracklist"></button>
+    <ul class="list" id="list"></ul>
+    <p class="tip" id="drawerTip" hidden></p>
+    <div class="bar">
+      <button class="btn btn--ghost" id="btnExport" type="button">Save a copy</button>
+      <button class="btn btn--ghost" id="btnImport" type="button">Load a tape</button>
+      <input id="fileIn" type="file" accept=".zip,.mixtape,application/zip,application/octet-stream" hidden>
+    </div>
+    <p class="foot" id="drawerFoot">None of this was rehearsed.</p>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ================= config ================= */
+// Paste your Supabase project URL + anon key to switch sync on. Until then the
+// tape works entirely offline and travels as an exported file.
+var SUPABASE = {
+  url: "https://ejgwqtcfgdjncdjvixnd.supabase.co",
+  anon: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqZ3dxdGNmZ2RqbmNkanZpeG5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxMzM5ODgsImV4cCI6MjEwNDcwOTk4OH0.mT9goU6D7o4cfN_Uyg80VlaEn5qxPL_KhTVw4LN-rqQ",
+  bucket: "tape"
+};
+
+// no fixed length: a side is however many tracks it has
+var SIDES = { A: "Boo Boo", B: "Sloth Bear" };
+var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ================= tiny helpers ================= */
+var $ = function(id){ return document.getElementById(id); };
+function mmss(s){ s=Math.max(0,Math.floor(s)); return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); }
+function kb(n){ return n<1024?n+" B":n<1048576?(n/1024).toFixed(0)+" KB":(n/1048576).toFixed(1)+" MB"; }
+var toastT;
+function toast(msg){ var t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){t.classList.remove("show");},2600); }
+
+/* ================= crypto ================= */
+// One passphrase derives two things: the AES key that scrambles the audio, and
+// an HMAC key that turns "A:3" into an unguessable storage filename. That is why
+// the bucket can be public — you cannot find what you cannot name.
+var KEYS = null;
+async function deriveKeys(pass){
+  var enc = new TextEncoder();
+  var base = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveBits","deriveKey"]);
+  var aes = await crypto.subtle.deriveKey(
+    { name:"PBKDF2", salt:enc.encode("mixtape.v1.aes"), iterations:210000, hash:"SHA-256" },
+    base, { name:"AES-GCM", length:256 }, false, ["encrypt","decrypt"]);
+  var bits = await crypto.subtle.deriveBits(
+    { name:"PBKDF2", salt:enc.encode("mixtape.v1.path"), iterations:120000, hash:"SHA-256" }, base, 256);
+  var mac = await crypto.subtle.importKey("raw", bits, { name:"HMAC", hash:"SHA-256" }, false, ["sign"]);
+  return { aes:aes, mac:mac };
+}
+async function pathFor(label){
+  var sig = await crypto.subtle.sign("HMAC", KEYS.mac, new TextEncoder().encode(label));
+  var hex=""; new Uint8Array(sig).forEach(function(b){ hex += b.toString(16).padStart(2,"0"); });
+  return hex.slice(0,40);
+}
+async function seal(buf){
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  var ct = await crypto.subtle.encrypt({ name:"AES-GCM", iv:iv }, KEYS.aes, buf);
+  var out = new Uint8Array(12 + ct.byteLength); out.set(iv,0); out.set(new Uint8Array(ct),12); return out;
+}
+async function open_(bytes){
+  var b = new Uint8Array(bytes);
+  return new Uint8Array(await crypto.subtle.decrypt({ name:"AES-GCM", iv:b.slice(0,12) }, KEYS.aes, b.slice(12)));
+}
+
+/* ================= local store (IndexedDB) ================= */
+var db=null;
+function idb(){
+  return new Promise(function(res,rej){
+    if(db) return res(db);
+    var r = indexedDB.open("mixtape", 1);
+    r.onupgradeneeded=function(){ r.result.createObjectStore("blobs"); r.result.createObjectStore("meta"); };
+    r.onsuccess=function(){ db=r.result; res(db); };
+    r.onerror=function(){ rej(r.error); };
+  });
+}
+function tx(store,mode,fn){
+  return idb().then(function(d){ return new Promise(function(res,rej){
+    var t=d.transaction(store,mode), s=t.objectStore(store), rq=fn(s);
+    t.oncomplete=function(){ res(rq&&rq.result); }; t.onerror=function(){ rej(t.error); };
+  });});
+}
+var put = function(store,k,v){ return tx(store,"readwrite",function(s){ return s.put(v,k); }); };
+var get = function(store,k){ return tx(store,"readonly",function(s){ return s.get(k); }); };
+
+/* ================= tape state ================= */
+// tracks[side][i] = { title, dur, size, mime, at } ; audio lives in IndexedDB
+var TAPE = { A:[], B:[] };
+// armed === -1 means "a new track on the end", which is the normal case.
+// A non-negative value means you deliberately picked one to record over.
+var me="A", view="A", armed=-1;
+// \u0001 means "recorded but not named yet": a ruled line on the card rather
+// than the word "untitled", which is not something anyone writes on a J-card.
+function writeCard(){
+  ["A","B"].forEach(function(sd){
+    $("card"+sd).textContent = TAPE[sd].map(function(t){
+      return t ? (t.title || "\u0001") : "";
+    }).join("|");
+  });
+}
+
+function blobKey(side,i){ return side+":"+i; }
+// Six voice notes are a toy. Six voice notes with dates on them are a record of
+// a year, which is the only reason to keep a thing like this.
+function ago(ts){
+  if(!ts) return "";
+  var d = Math.floor((Date.now()-ts)/1000);
+  if(d < 90)      return "just now";
+  if(d < 5400)    return Math.round(d/60)+" min ago";
+  if(d < 79200)   return Math.round(d/3600)+" hr ago";
+  var days = Math.round(d/86400);
+  if(days < 7)    return days===1 ? "yesterday" : days+" days ago";
+  if(days < 31)   return Math.round(days/7)+(Math.round(days/7)===1?" week ago":" weeks ago");
+  if(days < 365)  return Math.round(days/30)+(Math.round(days/30)===1?" month ago":" months ago");
+  return new Date(ts).toLocaleDateString(undefined,{month:"short", year:"numeric"});
+}
+async function saveTape(){ await put("meta","tape",{T:JSON.parse(JSON.stringify(TAPE)),R:REV,H:HEARD,X:THEIRS,K:REACT,Y:THEIRR,E:RECENT}); }
+async function loadTape(){
+  var t = await get("meta","tape");
+  if(t && t.T && t.T.A){
+    TAPE = t.T; REV = t.R || {A:0,B:0};
+    // tapes saved when a side was six fixed slots carry trailing nulls; the
+    // list has to end at the last real track or the "add" row sits miles down
+    ["A","B"].forEach(function(sd){
+      while(TAPE[sd].length && !TAPE[sd][TAPE[sd].length-1]) TAPE[sd].pop();
+    });
+    HEARD = t.H || {A:[],B:[]}; THEIRS = t.X || [];
+    REACT = t.K || {A:[],B:[]};  THEIRR = t.Y || [];
+    if(t.E && t.E.length) RECENT = t.E;
+  }
+  else if(t && t.A && t.B){ TAPE = t; }   // tapes saved before revisions existed
+}
+
+/* ================= sync adapter ================= */
+// Deliberately dumb: it puts and gets opaque bytes. All meaning stays client-side.
+// Insert-only by design — nothing is ever overwritten, so the bucket needs no
+// update permission and a changed policy can't quietly break syncing. Every save
+// writes a new revision; readers find the newest by probing.
+var REV = { A:0, B:0 };
+var HEARD = { A:[], B:[] };        // what I have played
+var REACT = { A:[], B:[] };        // what I left on their tracks
+var THEIRS = [];                   // which of my tracks they have played
+var THEIRR = [];                   // what they left on mine
+// Seeds only. The row becomes whatever she actually uses, and the + opens her
+// own emoji keyboard, so the choice is never limited to a list I picked.
+var SEED_FACES = ["\u2764\ufe0f","\ud83e\udd7a","\ud83d\ude02","\ud83c\udf3b","\u2728"];
+var RECENT = SEED_FACES.slice();
+var PICTO = null;
+try{ PICTO = new RegExp("\\p{Extended_Pictographic}","u"); }catch(e){}
+// an emoji can be many code points — a flag, a skin tone, a family — so take one
+// whole grapheme rather than one character
+function firstEmoji(str){
+  str = (str||"").trim();
+  if(!str) return null;
+  var g = null;
+  if(window.Intl && Intl.Segmenter){
+    var it = new Intl.Segmenter(undefined,{granularity:"grapheme"}).segment(str)[Symbol.iterator]();
+    var first = it.next();
+    if(!first.done) g = first.value.segment;
+  }
+  if(!g) g = Array.from(str).slice(0,3).join("");
+  if(PICTO && !PICTO.test(g)) return null;
+  return g;
+}
+function remember(face){
+  RECENT = [face].concat(RECENT.filter(function(f){ return f !== face; })).slice(0,6);
+}
+function other(side){ return side==="A" ? "B" : "A"; }
+function unheard(side){
+  var n=0;
+  for(var i=0;i<TAPE[side].length;i++) if(TAPE[side][i] && !HEARD[side][i]) n++;
+  return n;
+}
+
+var sync = {
+  on: function(){ return !!(SUPABASE.url && SUPABASE.anon); },
+  base: function(){ return SUPABASE.url.replace(/\/$/,""); },
+  // Storage answers 400 for both "no such object" and "already exists"; the real
+  // code is in the body, so status alone would read a missing file as a failure.
+  code: async function(r){ try{ return String((await r.json()).statusCode||r.status); }catch(e){ return String(r.status); } },
+  put: async function(p,bytes){
+    var r = await fetch(this.base()+"/storage/v1/object/"+SUPABASE.bucket+"/"+p, {
+      method:"POST",
+      headers:{ "authorization":"Bearer "+SUPABASE.anon, "apikey":SUPABASE.anon,
+                "content-type":"application/octet-stream" },
+      body:bytes });
+    if(r.ok) return "ok";
+    var c = await this.code(r);
+    if(c==="409") return "exists";            // revision taken: caller bumps it
+    throw new Error("upload "+c);
+  },
+  get: async function(p){
+    var r = await fetch(this.base()+"/storage/v1/object/public/"+SUPABASE.bucket+"/"+p, {cache:"no-store"});
+    if(r.ok) return new Uint8Array(await r.arrayBuffer());
+    var c = await this.code(r);
+    if(c==="404") return null;
+    throw new Error("download "+c);
+  }
+};
+function setSync(cls,txt){ $("syncDot").className="dot "+cls; $("syncTxt").textContent=txt; }
+// Health of the whole tape, not just the side we happened to check last.
+function syncOk(){
+  // Both sides are pulled at once. Whichever finished first used to get the
+  // last word, so an empty side B announced an empty tape while side A was
+  // still downloading — the one message you must not get wrong.
+  if(inflight.A || inflight.B) return;
+  if(pullErr.A || pullErr.B){ setSync("err","Offline"); return; }
+  var any = TAPE.A.some(Boolean) || TAPE.B.some(Boolean);
+  setSync("ok", any ? "In sync" : "Nothing yet");
+}
+
+async function manAt(side,rev){ return sync.get(await pathFor("man:"+side+":"+rev)); }
+
+// Doubling probe then binary search, so a device that has been away for a while
+// still finds the newest revision in about ten requests rather than one per save.
+// Revisions are contiguous, so the newest one is the last before the first gap.
+// Walking them one at a time cost a network round trip per step and was most of
+// the wait on opening a tape; a block of probes at once costs one.
+async function latestRev(side, from){
+  var lo = from || 0, STEP = 8;
+  for(var guard=0; guard<64; guard++){
+    var probe = [];
+    for(var k=1;k<=STEP;k++) probe.push(lo+k);
+    var hits = await Promise.all(probe.map(function(r){
+      return manAt(side,r).then(function(x){ return !!x; }, function(){ return false; });
+    }));
+    var n=0; while(n<hits.length && hits[n]) n++;
+    lo += n;
+    if(n < STEP) return lo;
+  }
+  return lo;
+}
+
+async function pushSide(side){
+  if(!sync.on()) return;
+  if(side !== me) return;              // your side is yours; theirs is never yours to publish
+  setSync("busy","Sending…");
+  try{
+    for(var attempt=0; attempt<4; attempt++){
+      var rev = REV[side] + 1;
+      // any slot without a remote revision yet gets written at this one
+      var pending = [];
+      for(var i=0;i<TAPE[side].length;i++){
+        var t = TAPE[side][i];
+        if(t && !t.arev){ pending.push(i); }
+      }
+      var clash = false;
+      for(var k=0;k<pending.length;k++){
+        var idx = pending[k];
+        var blob = await get("blobs", blobKey(side,idx));
+        if(!blob) continue;
+        var res = await sync.put(await pathFor("aud:"+side+":"+idx+":"+rev), await seal(await blob.arrayBuffer()));
+        if(res==="exists"){ clash = true; break; }
+        TAPE[side][idx].arev = rev;
+      }
+      if(!clash){
+        var body = new TextEncoder().encode(JSON.stringify({ t:TAPE[side], h:HEARD[other(side)], r:REACT[other(side)] }));
+        var mres = await sync.put(await pathFor("man:"+side+":"+rev), await seal(body));
+        if(mres!=="exists"){ REV[side] = rev; await saveTape(); syncOk(); return; }
+      }
+      // somebody else used that revision — clear the stamps and try the next one
+      pending.forEach(function(i){ if(TAPE[side][i]) TAPE[side][i].arev = 0; });
+      REV[side] = await latestRev(side, REV[side]);
+    }
+    setSync("err","Will retry");
+  }catch(e){ setSync("err","Will retry"); }
+}
+
+var inflight = { A:false, B:false }, pullErr = { A:false, B:false };
+async function pullSide(side){
+  if(!sync.on() || inflight[side]) return;      // no piling up duplicate probes
+  inflight[side] = true; pullErr[side] = false;
+  try{
+    setSync("busy","Checking…");
+    var rev = await latestRev(side, REV[side]);
+    if(rev === 0) return;
+    var raw = await manAt(side, rev);
+    if(raw){
+      var wire = JSON.parse(new TextDecoder().decode(await open_(raw)));
+      // tapes written before receipts existed are a bare array
+      var meta = Array.isArray(wire) ? wire : (wire.t || []);
+      if(!Array.isArray(wire)){
+        if(side === me){                              // my own marks, from my other device
+          if(wire.h) HEARD[other(me)] = wire.h;
+          if(wire.r) REACT[other(me)] = wire.r;
+        }else{                                        // what they made of mine
+          if(wire.h) THEIRS = wire.h;
+          if(wire.r) THEIRR = wire.r;
+        }
+      }
+      // One round trip per track, in series, was most of the wait on opening a
+      // tape. They do not depend on each other, so they go together.
+      var want = [];
+      for(var i=0;i<meta.length;i++){
+        var m = meta[i];
+        if(m && m.arev && !TAPE[side][i]) want.push({i:i, m:m});
+      }
+      var got = await Promise.all(want.map(async function(w){
+        try{ return {i:w.i, m:w.m, bytes: await sync.get(await pathFor("aud:"+side+":"+w.i+":"+w.m.arev))}; }
+        catch(e){ return {i:w.i, m:w.m, bytes:null}; }   // one bad track must not sink the rest
+      }));
+      for(var k=0;k<got.length;k++){
+        var g=got[k];
+        if(!g.bytes) continue;
+        await put("blobs", blobKey(side,g.i), new Blob([await open_(g.bytes)], {type:g.m.mime||"audio/webm"}));
+        TAPE[side][g.i] = g.m;
+      }
+      REV[side] = rev;
+      await saveTape(); render();
+    }
+  }catch(e){ pullErr[side] = true; }
+  finally{ inflight[side] = false; syncOk(); }
+}
+function pushTrack(side){ return pushSide(side); }
+
+/* ================= reels ================= */
+var running=false;
+function reels(p){
+  p = Math.max(0, Math.min(1, p||0));
+  if(window.TAPE3D) TAPE3D.reels(p);
+}
+function setRunning(on,rec,held){
+  running=on;
+  $("deck").classList.toggle("is-running", on && !reduce);
+  $("deck").classList.toggle("is-rec", !!rec);
+  if(window.TAPE3D) TAPE3D.running(on && !reduce, !!rec, !!held);
+}
+function latch(id,on){ if(window.TAPE3D) TAPE3D.latch(id,on); }
+
+/* ================= recorder ================= */
+var mediaRec=null, chunks=[], stream=null, t0=0, timer=null, pending=null;
+
+/* ================= level meter =================
+   One audio graph, built on the first user gesture because iOS will not start
+   an AudioContext without one. The microphone is analysed but never connected
+   to the speakers; playback has to be, or routing it through the graph would
+   silence it. */
+var actx=null, ana=null, anaBuf=null, micSrc=null, elSrc=null, vuRAF=0;
+function audioCtx(){
+  if(actx) return actx;
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if(!AC) return null;
+  try{ actx = new AC(); }catch(e){ return null; }
+  ana = actx.createAnalyser();
+  ana.fftSize = 1024; ana.smoothingTimeConstant = 0.6;
+  anaBuf = new Uint8Array(ana.fftSize);
+  return actx;
+}
+function vuFrom(node){
+  var c=audioCtx(); if(!c || !node) return;
+  if(c.state === "suspended") c.resume();
+  try{ node.connect(ana); }catch(e){}
+  if(!vuRAF) vuPump();
+}
+function vuPump(){
+  vuRAF = requestAnimationFrame(vuPump);
+  if(!ana) return;
+  ana.getByteTimeDomainData(anaBuf);
+  var sum=0;
+  for(var i=0;i<anaBuf.length;i++){ var d=(anaBuf[i]-128)/128; sum += d*d; }
+  var rms = Math.sqrt(sum/anaBuf.length);
+  // speech sits low in linear terms, so the meter is scaled the way ears are
+  var v = Math.min(1, Math.pow(rms*3.2, 0.62));
+  if(window.TAPE3D) TAPE3D.level(v);
+}
+function vuStop(){
+  if(vuRAF){ cancelAnimationFrame(vuRAF); vuRAF=0; }
+  // the element source stays connected: disconnecting it would route playback
+  // away from the speakers
+  if(micSrc){ try{ micSrc.disconnect(); }catch(e){} micSrc=null; }
+  // no TAPE3D.level(0) here — stop feeding it and the meter falls on its own
+}
+var heldAt=0, heldMs=0;
+// Safari shipped MediaRecorder before pause/resume; better to say so than to
+// hand her a key that quietly does nothing
+var CAN_HOLD = !!(window.MediaRecorder && MediaRecorder.prototype &&
+                  typeof MediaRecorder.prototype.pause === "function");
+// wall-clock minus everything spent on hold, so the counter, the reels and the
+// saved duration all agree
+function recSecs(){ return ((heldAt || Date.now()) - t0 - heldMs)/1000; }
+function pickMime(){
+  var c=["audio/webm;codecs=opus","audio/webm","audio/mp4;codecs=mp4a.40.2","audio/mp4","audio/ogg;codecs=opus"];
+  for(var i=0;i<c.length;i++){ if(window.MediaRecorder && MediaRecorder.isTypeSupported(c[i])) return c[i]; }
+  return "";
+}
+var starting=false;
+async function startRec(){
+  if(view !== me) return;
+  // Asking for the microphone takes long enough that a second tap arrives while
+  // mediaRec is still null, sails past the caller's guard, and starts a whole
+  // second take. The first one's interval and microphone then belong to nobody:
+  // the counter keeps running for the rest of the session and the mic stays
+  // live. The flag is set synchronously, before the first await, on purpose.
+  if(starting) return;
+  if(mediaRec && mediaRec.state !== "inactive") return;
+  starting = true;
+  try{ await setupRec(); } finally{ starting = false; }
+}
+async function setupRec(){
+  if(!navigator.mediaDevices){ toast("This browser can't record audio"); return; }
+  if(stream){                                  // never leave an old mic open
+    try{ stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+    stream = null;
+  }
+  try{ stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}); }
+  catch(e){ toast("Mic blocked — allow it in your browser settings"); return; }
+  var mime = pickMime();
+  try{ mediaRec = new MediaRecorder(stream, mime?{mimeType:mime,audioBitsPerSecond:32000}:{}); }
+  catch(e){ mediaRec = new MediaRecorder(stream); }
+  chunks=[]; pending=null;
+  mediaRec.ondataavailable=function(e){ if(e.data&&e.data.size) chunks.push(e.data); };
+  mediaRec.onstop=function(){
+    var blob = new Blob(chunks, {type: mediaRec.mimeType || "audio/webm"});
+    pending = { blob:blob, dur:recSecs(), mime:blob.type };
+    vuStop();
+    stream.getTracks().forEach(function(t){ t.stop(); });
+    setRunning(false,false); reels(1);
+    $("stateTxt").textContent="REVIEW";
+    $("sizeTxt").textContent=kb(blob.size);
+    show(["btnKeep","btnScrap"]); $("btnRec").disabled=true; $("btnRec").classList.remove("down");
+    latch("btnRec",false); latch("btnPause",false);
+  };
+  chunks=[]; heldAt=0; heldMs=0;
+  if(audioCtx()){ micSrc = actx.createMediaStreamSource(stream); vuFrom(micSrc); }
+  mediaRec.start(250); t0=Date.now();
+  setRunning(true,true); $("stateTxt").textContent="REC";
+  $("btnRec").classList.add("down"); hide(["btnKeep","btnScrap"]);
+  latch("btnRec",true); latch("btnPause",false); render();
+  clearInterval(timer);
+  timer=setInterval(function(){
+    var s=recSecs();
+    $("counter").textContent=mmss(s);
+    $("counter").classList.toggle("warn", s>300);
+    reels(Math.min(1, s/600));                    // a full reel reads as ~10 min
+    $("sizeTxt").textContent="~"+kb(Math.round(s*4000));
+  },200);
+}
+function stopRec(){ if(mediaRec && mediaRec.state!=="inactive"){ clearInterval(timer); mediaRec.stop(); } }
+// a take is live from the moment REC goes down until Keep or Scrap settles it
+function takeLive(){ return !!pending || !!(mediaRec && mediaRec.state!=="inactive"); }
+function holdRec(){
+  if(!mediaRec || mediaRec.state!=="recording") return;
+  if(!CAN_HOLD){ toast("This browser can't pause a recording"); return; }
+  mediaRec.pause(); heldAt=Date.now(); vuStop();
+  setRunning(false,true,true); $("stateTxt").textContent="PAUSE";
+  latch("btnPause",true); render();
+}
+function resumeRec(){
+  if(!mediaRec || mediaRec.state!=="paused") return;
+  heldMs += Date.now()-heldAt; heldAt=0;
+  mediaRec.resume();
+  if(audioCtx() && stream){ micSrc = actx.createMediaStreamSource(stream); vuFrom(micSrc); }
+  setRunning(true,true); $("stateTxt").textContent="REC";
+  latch("btnPause",false); render();
+}
+function show(ids){ ids.forEach(function(i){ $(i).hidden=false; }); }
+function hide(ids){ ids.forEach(function(i){ $(i).hidden=true; }); }
+
+/* ================= playback ================= */
+var audio=new Audio(), playing=-1, playView="";
+audio.crossOrigin="anonymous";
+function vuPlayback(){
+  var c=audioCtx(); if(!c) return;
+  if(!elSrc){
+    try{ elSrc = c.createMediaElementSource(audio); }catch(e){ return; }
+    elSrc.connect(c.destination);          // or the tape plays to nobody
+  }
+  vuFrom(elSrc);
+}
+audio.addEventListener("timeupdate", function(){
+  if(!audio.duration) return;
+  // a real deck's counter runs whenever the tape is moving, playing included
+  $("counter").textContent = mmss(audio.currentTime);
+  reels(audio.currentTime/audio.duration);
+  if(audio.currentTime > audio.duration*0.5) markHeard(playView, playing);
+});
+// Half of it counts as listened to. Waiting for the very end means a receipt
+// almost never fires, which is worse than a slightly generous one.
+var heardPush=null;
+// A reaction is a reply, where a heard-mark is only information. It travels the
+// same way: on the manifest of whoever wrote it.
+function react(side,i,face){
+  if(side === me) return;                  // you do not react to your own voice
+  var was = REACT[side][i];
+  REACT[side][i] = (was === face) ? null : face;
+  if(REACT[side][i]) remember(face);
+  saveTape(); render();
+  clearTimeout(heardPush);
+  heardPush = setTimeout(function(){ pushSide(me); }, 900);
+}
+function markHeard(side,i){
+  if(i<0 || !side || !TAPE[side][i] || HEARD[side][i]) return;
+  HEARD[side][i]=true; saveTape(); render();
+  if(side === me) return;                 // my own track: nothing for them to learn
+  clearTimeout(heardPush);
+  heardPush = setTimeout(function(){ pushSide(me); }, 1200);   // one revision, not six
+}
+audio.addEventListener("pause", vuStop);
+audio.addEventListener("ended", function(){
+  vuStop(); markHeard(playView,playing); setRunning(false,false); playing=-1;
+  // a take you have not decided on yet is still in review, not ready
+  $("stateTxt").textContent = pending ? "REVIEW" : "READY";
+  render();
+});
+async function playSlot(side,i){
+  var blob = await get("blobs", blobKey(side,i));
+  if(!blob){ toast("That track isn't on this device yet"); return; }
+  if(playing===i && !audio.paused){ audio.pause(); setRunning(false,false); playing=-1; render(); return; }
+  audio.src = URL.createObjectURL(blob); playing=i; playView=side;
+  $("labSub").textContent = "side "+side.toLowerCase()+" · track "+(i+1);
+  $("stateTxt").textContent="PLAY";
+  $("counter").textContent="00:00"; $("counter").classList.remove("warn");
+  vuPlayback();
+  audio.play().then(function(){ setRunning(true,false); render(); }).catch(function(){ toast("Tap play again"); });
+}
+
+/* ================= render ================= */
+function render(){
+  var ul=$("list"); ul.innerHTML="";
+  var mine = view===me;
+  for(var i=0;i<TAPE[view].length;i++){
+    (function(i){
+      var t = TAPE[view][i];
+      if(!t) return;                       // a hole left by an older tape
+      var li=document.createElement("li");
+      var fresh = !!t && !mine && !HEARD[view][i];
+      li.className="trk"+(playing===i?" on":"")+((mine && armed===i)?" armed":"")+(fresh?" fresh":"");
+      li.style.setProperty("--tilt", ((i%2?1:-1)*0.35)+"deg");
+      var no=document.createElement("span"); no.className="trk__no"; no.textContent=String(i+1).padStart(2,"0");
+      var mid=document.createElement("div");
+      if(t && mine){
+        var inp=document.createElement("input"); inp.className="lbl"; inp.value=t.title||"";
+        inp.placeholder="name this one"; inp.setAttribute("aria-label","Title for track "+(i+1));
+        inp.addEventListener("change", function(){ t.title=inp.value.trim(); saveTape(); writeCard(); pushTrack(view); });
+        mid.appendChild(inp);
+      } else {
+        var p=document.createElement("p"); p.className="trk__ttl";
+        p.textContent = t.title || ("Track "+(i+1));
+        mid.appendChild(p);
+      }
+      if(t){
+        var sub=document.createElement("span"); sub.className="trk__sub";
+        sub.textContent = ago(t.at);
+        if(mine && THEIRS[i]){
+          var seen=document.createElement("b"); seen.className="trk__seen"; seen.textContent="heard";
+          sub.appendChild(document.createTextNode(" · ")); sub.appendChild(seen);
+        }
+        if(mine && THEIRR[i]){
+          var got=document.createElement("b"); got.className="trk__got"; got.textContent=THEIRR[i];
+          sub.appendChild(document.createTextNode(" ")); sub.appendChild(got);
+        }
+        mid.appendChild(sub);
+      }
+      var right=document.createElement("div");
+      right.style.display="flex"; right.style.alignItems="center"; right.style.gap="10px";
+      var len=document.createElement("span"); len.className="trk__len"; len.textContent = t?mmss(t.dur):"--:--";
+      if(fresh){ var nw=document.createElement("span"); nw.className="trk__new"; nw.textContent="new";
+                 right.appendChild(nw); }
+      right.appendChild(len);
+      var act=document.createElement("button"); act.className="trk__act"; act.type="button";
+      act.textContent = (playing===i && !audio.paused) ? "❚❚" : "▶";
+      act.setAttribute("aria-label","Play track "+(i+1));
+      act.onclick=function(){ playSlot(view,i); };
+      right.appendChild(act);
+      if(t && !mine){
+        // their track: leave a reaction on it
+        var yours = REACT[view][i];
+        var rb=document.createElement("button");
+        rb.className="trk__act trk__act--react"+(yours?" on":"");
+        rb.type="button"; rb.textContent = yours || "+";
+        rb.setAttribute("aria-label", yours ? "Change your reaction to track "+(i+1)
+                                            : "React to track "+(i+1));
+        rb.onclick=function(){
+          var open = li.querySelector(".faces");
+          if(open){ open.remove(); return; }
+          var row=document.createElement("div"); row.className="faces";
+          RECENT.forEach(function(f){
+            var fb=document.createElement("button");
+            fb.type="button"; fb.className="faces__b"+(REACT[view][i]===f?" on":"");
+            fb.textContent=f; fb.setAttribute("aria-label","React "+f);
+            fb.onclick=function(ev){ ev.stopPropagation(); react(view,i,f); };
+            row.appendChild(fb);
+          });
+          // anything else she has: her own keyboard, not a list of mine
+          var any=document.createElement("button");
+          any.type="button"; any.className="faces__b faces__any"; any.textContent="+";
+          any.setAttribute("aria-label","Pick any emoji");
+          var inp=document.createElement("input");
+          inp.className="faces__in"; inp.type="text"; inp.hidden=true;
+          inp.setAttribute("aria-label","Type or pick any emoji");
+          inp.autocomplete="off"; inp.autocapitalize="off"; inp.spellcheck=false;
+          any.onclick=function(ev){
+            ev.stopPropagation();
+            inp.hidden=false; any.hidden=true; inp.focus();
+          };
+          inp.addEventListener("input", function(){
+            var f=firstEmoji(inp.value);
+            if(!f){ if(inp.value) { inp.value=""; toast("Pick an emoji"); } return; }
+            react(view,i,f);
+          });
+          row.appendChild(any); row.appendChild(inp);
+          li.appendChild(row);
+        };
+        right.appendChild(rb);
+      }
+      if(t && mine){
+        var re=document.createElement("button");
+        re.className="trk__act trk__act--re"; re.type="button"; re.textContent="●";
+        re.setAttribute("aria-label","Record over track "+(i+1));
+        re.title = "Record over track "+(i+1);
+        re.onclick=function(){ armed=i; setDrawer(false); render(); askOver(); };
+        right.appendChild(re);
+      }
+      li.appendChild(no); li.appendChild(mid); li.appendChild(right);
+      ul.appendChild(li);
+    })(i);
+  }
+  if(mine){
+    var n2 = TAPE[me].length;
+    var add=document.createElement("li");
+    add.className="trk trk--add"+(armed===-1?" armed":"");
+    add.style.setProperty("--tilt", ((n2%2?1:-1)*0.35)+"deg");
+    var an=document.createElement("span"); an.className="trk__no";
+    an.textContent=String(n2+1).padStart(2,"0");
+    var am=document.createElement("div");
+    var ap=document.createElement("p"); ap.className="trk__ttl empty";
+    ap.textContent = n2 ? "say another one" : "press record, say the real thing";
+    am.appendChild(ap);
+    var ar=document.createElement("div");
+    ar.style.display="flex"; ar.style.alignItems="center"; ar.style.gap="10px";
+    var ab=document.createElement("button"); ab.className="trk__act"; ab.type="button";
+    ab.textContent="●"; ab.setAttribute("aria-label","Record a new track");
+    ab.onclick=function(){ armed=-1; setDrawer(false); render(); startRec(); };
+    ar.appendChild(ab);
+    add.appendChild(an); add.appendChild(am); add.appendChild(ar);
+    ul.appendChild(add);
+  }else if(!TAPE[view].length){
+    var none=document.createElement("li");
+    none.className="trk"; none.style.setProperty("--tilt","-0.35deg");
+    none.innerHTML='<span class="trk__no">--</span>'+
+      '<div><p class="trk__ttl empty">nothing on this side yet</p></div><div></div>';
+    ul.appendChild(none);
+  }
+  // the re-record key is a small dot next to a play triangle; say what it does
+  // once, where you would be looking for it
+  // the drawer is read from two places. Looking at theirs you are a listener;
+  // looking at your own you are about to say something.
+  $("drawerFoot").textContent = mine
+    ? "Say the thing you didn't get to."
+    : "None of this was rehearsed.";
+  var tip=$("drawerTip");
+  if(mine && TAPE[me].length){
+    tip.innerHTML = 'tap <b>\u25cf</b> beside a track to record over it';
+    tip.hidden=false;
+  }else tip.hidden=true;
+  $("btnRec").disabled = !(view===me) || !!pending || !!(mediaRec && mediaRec.state!=="inactive");
+  var filled = TAPE[view].filter(Boolean).length;
+  $("tabCount").textContent = filled ? (filled + (filled===1 ? " track" : " tracks")) : "empty";
+  var n = unheard(other(me));
+  $("tabNew").textContent = n ? (n===1 ? "1 new" : n+" new") : "";
+  $("tabNew").hidden = !n;
+  $("tabTracks").classList.toggle("has-new", !!n);
+  $("labTop").textContent = "Our mixtape";
+  writeCard();
+  var tgt = (armed>=0) ? TAPE[me][armed] : null;
+  var where = (armed>=0) ? ("TRACK "+(armed+1)+(tgt ? " · OVER" : "")) 
+                         : ("TRACK "+(TAPE[me].length+1)+" · NEW");
+  $("knob").setAttribute("aria-disabled", String(takeLive()));
+  $("sidePill").textContent = (view===me) ? ("SIDE "+me+" · "+where)
+                                          : ("SIDE "+view+" · LISTENING");
+  // the J-card says the same thing, so the answer is on the object too
+  if(playing<0) $("labSub").textContent = (armed>=0 && tgt)
+    ? ("side "+me.toLowerCase()+" · track "+(armed+1)+" · "+mmss(tgt.dur))
+    : ("side "+me.toLowerCase()+" · track "+(TAPE[me].length+1)+" · new");
+}
+
+/* ================= export / import ================= */
+/* ================= save a copy =================
+   A plain ZIP, stored not deflated — the audio inside is already Opus or AAC,
+   so compressing it again would only cost time. Store-only also means the
+   reader is fifty lines instead of a decompressor.
+
+   The file is deliberately NOT encrypted. The point of this copy is that she
+   can open it on any phone and hear it in five years without this page, a
+   passphrase, or a server. That is a real trade for a real risk: anyone holding
+   the file can play it. The sealed copy the sync layer keeps is the private one.
+   ============================================= */
+var CRC_T = (function(){
+  var t=new Uint32Array(256);
+  for(var n=0;n<256;n++){ var c=n;
+    for(var k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1);
+    t[n]=c>>>0; }
+  return t;
+})();
+function crc32(u8){
+  var c=0xFFFFFFFF;
+  for(var i=0;i<u8.length;i++) c = CRC_T[(c ^ u8[i]) & 0xFF] ^ (c>>>8);
+  return (c ^ 0xFFFFFFFF)>>>0;
+}
+function dosTime(ms){
+  var d=new Date(ms||Date.now());
+  return { t:((d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1))&0xFFFF,
+           d:(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xFFFF };
+}
+function zipStore(entries){
+  var enc=new TextEncoder(), locals=[], central=[], off=0;
+  entries.forEach(function(e){
+    var name=enc.encode(e.name), crc=crc32(e.data), n=e.data.length, dt=dosTime(e.at);
+    var lh=new Uint8Array(30+name.length), lv=new DataView(lh.buffer);
+    lv.setUint32(0,0x04034b50,true); lv.setUint16(4,20,true);
+    lv.setUint16(6,0x0800,true);                      // UTF-8 names
+    lv.setUint16(8,0,true); lv.setUint16(10,dt.t,true); lv.setUint16(12,dt.d,true);
+    lv.setUint32(14,crc,true); lv.setUint32(18,n,true); lv.setUint32(22,n,true);
+    lv.setUint16(26,name.length,true); lv.setUint16(28,0,true);
+    lh.set(name,30);
+    locals.push(lh, e.data);
+
+    var ch=new Uint8Array(46+name.length), cv=new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true);
+    cv.setUint16(8,0x0800,true); cv.setUint16(10,0,true);
+    cv.setUint16(12,dt.t,true); cv.setUint16(14,dt.d,true);
+    cv.setUint32(16,crc,true); cv.setUint32(20,n,true); cv.setUint32(24,n,true);
+    cv.setUint16(28,name.length,true);
+    cv.setUint32(42,off,true);
+    ch.set(name,46);
+    central.push(ch);
+    off += lh.length + n;
+  });
+  var cdSize=central.reduce(function(a,c){return a+c.length;},0);
+  var eo=new Uint8Array(22), ev=new DataView(eo.buffer);
+  ev.setUint32(0,0x06054b50,true);
+  ev.setUint16(8,entries.length,true); ev.setUint16(10,entries.length,true);
+  ev.setUint32(12,cdSize,true); ev.setUint32(16,off,true);
+  return new Blob(locals.concat(central,[eo]), {type:"application/zip"});
+}
+function unzip(u8){
+  var dv=new DataView(u8.buffer,u8.byteOffset,u8.byteLength), eocd=-1;
+  for(var i=u8.length-22;i>=0 && i>u8.length-66000;i--)
+    if(dv.getUint32(i,true)===0x06054b50){ eocd=i; break; }
+  if(eocd<0) throw new Error("not a zip");
+  var count=dv.getUint16(eocd+10,true), p=dv.getUint32(eocd+16,true), out={};
+  for(var k=0;k<count;k++){
+    if(dv.getUint32(p,true)!==0x02014b50) throw new Error("bad central directory");
+    var method=dv.getUint16(p+10,true), size=dv.getUint32(p+24,true);
+    var nlen=dv.getUint16(p+28,true), elen=dv.getUint16(p+30,true), clen=dv.getUint16(p+32,true);
+    var lo=dv.getUint32(p+42,true);
+    var name=new TextDecoder().decode(u8.slice(p+46, p+46+nlen));
+    if(method!==0) throw new Error("compressed entries are not supported");
+    var lnlen=dv.getUint16(lo+26,true), lelen=dv.getUint16(lo+28,true);
+    var start=lo+30+lnlen+lelen;
+    out[name]=u8.slice(start,start+size);
+    p += 46+nlen+elen+clen;
+  }
+  return out;
+}
+function extFor(mime){
+  mime=(mime||"").toLowerCase();
+  if(mime.indexOf("mp4")>=0 || mime.indexOf("m4a")>=0 || mime.indexOf("aac")>=0) return "m4a";
+  if(mime.indexOf("ogg")>=0) return "ogg";
+  if(mime.indexOf("wav")>=0) return "wav";
+  return "webm";
+}
+function safeName(s){ return (s||"").replace(/[\\/:*?"<>|\u0000-\u001f]/g,"").trim().slice(0,60); }
+
+async function exportTape(){
+  var entries=[], man={v:2, made:Date.now(), sides:{A:[],B:[]}}, n=0;
+  for(var s in SIDES){
+    for(var i=0;i<TAPE[s].length;i++){
+      var t=TAPE[s][i]; if(!t) continue;
+      var blob = await get("blobs", blobKey(s,i)); if(!blob) continue;
+      var title = safeName(t.title) || ("Track "+(i+1));
+      var name = "Side "+s+"/"+String(i+1).padStart(2,"0")+" "+title+"."+extFor(t.mime);
+      entries.push({ name:name, at:t.at, data:new Uint8Array(await blob.arrayBuffer()) });
+      man.sides[s].push({ slot:i, file:name, title:t.title||"", dur:t.dur, mime:t.mime, at:t.at });
+      n++;
+    }
+  }
+  if(!n){ toast("Nothing on the tape yet"); return; }
+  entries.push({ name:"mixtape.json", at:Date.now(),
+                 data:new TextEncoder().encode(JSON.stringify(man,null,2)) });
+  entries.push({ name:"README.txt", at:Date.now(), data:new TextEncoder().encode(
+    "Our mixtape\n\n"+
+    "The folders hold the recordings as ordinary audio files. Open them in\n"+
+    "anything — they need no password and no internet.\n\n"+
+    "To put the tape back into the recorder, open it and choose Load a tape,\n"+
+    "then pick this zip. mixtape.json is what tells it which track goes where.\n") });
+
+  var blob = zipStore(entries);
+  // iOS Safari does not reliably save a blob from a programmatic <a download> —
+  // it opens it, or does nothing at all, with no error either way. Since this
+  // file is the only backup that survives a lost phone and a forgotten word, it
+  // goes through the share sheet where one exists.
+  try{
+    var file = new File([blob], "our-mixtape.zip", {type:"application/zip"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:"Our mixtape"});
+      toast("Tape sent");
+      return;
+    }
+  }catch(e){
+    if(e && e.name === "AbortError") return;          // they changed their mind
+  }
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="our-mixtape.zip"; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 30000);
+  toast("Tape saved — it plays anywhere");
+}
+
+async function importTape(file){
+  var u8=new Uint8Array(await file.arrayBuffer());
+  var isZip = u8.length>4 && u8[0]===0x50 && u8[1]===0x4B && u8[2]===0x03 && u8[3]===0x04;
+  try{
+    if(isZip) await importZip(u8);
+    else await importSealed(u8);          // the old sealed .mixtape still loads
+    await saveTape(); render(); toast("Tape loaded 🎧");
+  }catch(e){
+    toast(isZip ? "Couldn't read that zip" : "Couldn't read that — is the word the same?");
+  }
+}
+async function importZip(u8){
+  var files=unzip(u8);
+  var man=files["mixtape.json"];
+  if(!man) throw new Error("no mixtape.json");
+  man=JSON.parse(new TextDecoder().decode(man));
+  for(var s in man.sides){
+    if(!TAPE[s]) continue;
+    for(var j=0;j<man.sides[s].length;j++){
+      var e=man.sides[s][j], i=e.slot, bytes=files[e.file];
+      if(!bytes || i<0) continue;
+      if(s===me && TAPE[s][i]) continue;                  // never overwrite your own takes
+      while(TAPE[s].length < i) TAPE[s].push(null);       // a list, so it has to reach
+      await put("blobs", blobKey(s,i), new Blob([bytes],{type:e.mime||"audio/webm"}));
+      TAPE[s][i] = { title:e.title||"", dur:e.dur, size:bytes.length, mime:e.mime, at:e.at };
+    }
+  }
+}
+async function importSealed(u8){
+  var raw = await open_(u8);
+  var dv=new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
+  var hl=dv.getUint32(0), head=JSON.parse(new TextDecoder().decode(raw.slice(4,4+hl))), off=4+hl;
+  for(var j=0;j<head.idx.length;j++){
+    var e=head.idx[j], bytes=raw.slice(off,off+e.n); off+=e.n;
+    var sp=e.k.split(":"), side=sp[0], i=+sp[1];
+    var meta = head.man[side][i];
+    if(side===me && TAPE[side][i]) continue;
+    await put("blobs", blobKey(side,i), new Blob([bytes],{type:(meta&&meta.mime)||"audio/webm"}));
+    TAPE[side][i]=meta;
+  }
+}
+
+/* ================= wiring ================= */
+$("who").addEventListener("click", function(e){
+  var b=e.target.closest("button[data-side]"); if(!b) return;
+  me=b.dataset.side; view=me;
+  [].forEach.call(this.querySelectorAll("button"), function(x){ x.setAttribute("aria-pressed", String(x===b)); });
+  $("enter").disabled = !($("pass").value.trim() && me);
+});
+$("pass").addEventListener("input", function(){
+  $("enter").disabled = !(this.value.trim() && document.querySelector('#who [aria-pressed="true"]'));
+});
+$("pass").addEventListener("keydown", function(e){ if(e.key==="Enter" && !$("enter").disabled) $("enter").click(); });
+
+$("enter").addEventListener("click", async function(){
+  $("enter").disabled=true; $("enter").textContent="Unlocking…";
+  KEYS = await deriveKeys($("pass").value.trim());
+  await loadTape();
+  var id = await pathFor("word.v1"), known = await get("meta","word");
+  if(known && known !== id && (TAPE.A.some(Boolean) || TAPE.B.some(Boolean))){
+    $("gateErr").textContent = "That's not the word this tape was made with. "+
+      "Your recordings are safe on this phone — check the spelling and try again.";
+    $("gateErr").hidden=false;
+    $("enter").disabled=false; $("enter").textContent="Load the tape 🎧";
+    $("pass").focus(); $("pass").select();
+    return;
+  }
+  await put("meta","word", id);
+  $("gateErr").hidden=true;
+  $("gate").hidden=true; $("main").hidden=false;
+  setView(view);
+  reels(0); render();
+  if(sync.on()){ setSync("busy","Checking…"); await pullSide("A"); await pullSide("B"); }
+  else setSync("", "Local only");
+  armed = -1;
+  render();
+});
+
+// the knob turns the tape over — a control, not an ornament
+function setView(v){
+  view = v;
+  $("sideLbl").textContent = "SIDE " + v;
+  if(window.TAPE3D) TAPE3D.side(v);
+  $("knob").setAttribute("aria-label", "Flip to side " + (v === "A" ? "B" : "A"));
+  render();
+  if(sync.on()) pullSide(v);
+}
+$("knob").addEventListener("click", function(){
+  // No deck lets you turn the tape over mid-take. Here it would also leave the
+  // screen showing one side while the mic is pointed at the other.
+  if(takeLive()){ toast("Finish this take first"); return; }
+  setView(view === "A" ? "B" : "A");
+});
+
+// Recording over a keeper is the only move that loses something, so it asks.
+function askOver(){
+  if(pending){ toast("Finish this take first"); return; }
+  $("btnYes").textContent = "Record over track "+(armed+1);   // only reachable when armed >= 0
+  show(["btnYes","btnNo"]); hide(["btnKeep","btnScrap"]);
+  $("stateTxt").textContent="OVER?"; render();
+}
+function askClear(){
+  var had = document.activeElement;
+  hide(["btnYes","btnNo"]);
+  if(had === $("btnYes") || had === $("btnNo")) $("btnRec").focus();
+}
+function beginTake(){
+  if(view !== me) return;              // you can hear their side; you cannot record onto it
+  if(armed >= 0 && TAPE[me][armed]) askOver(); else startRec();
+}
+$("btnRec").addEventListener("click", function(){
+  if(mediaRec && mediaRec.state!=="inactive") return;    // STOP ends a take, as on a real deck
+  if(pending) return;
+  beginTake();
+});
+$("btnYes").addEventListener("click", function(){ askClear(); startRec(); });
+$("btnNo").addEventListener("click", function(){
+  askClear();
+  armed = -1;                                       // back to a fresh track
+  $("stateTxt").textContent="READY"; render();
+});
+$("btnStop").addEventListener("click", function(){
+  if(mediaRec && mediaRec.state!=="inactive"){ stopRec(); return; }
+  if(!audio.paused){ audio.pause(); setRunning(false,false); playing=-1; $("stateTxt").textContent="READY"; render(); }
+});
+$("btnPause").addEventListener("click", function(){
+  if(mediaRec && mediaRec.state==="recording"){ holdRec(); return; }
+  if(mediaRec && mediaRec.state==="paused"){ resumeRec(); return; }
+  // the same key holds a playback where it is, which is what PAUSE means
+  if(!audio.paused){ audio.pause(); setRunning(false,false); $("stateTxt").textContent="PAUSE"; return; }
+  if(audio.src && playing>=0){
+    audio.play().then(function(){ setRunning(true,false); $("stateTxt").textContent="PLAY"; })
+                .catch(function(){ toast("Tap play again"); });
+  }
+});
+$("btnPlay").addEventListener("click", function(){
+  if(pending){ audio.src=URL.createObjectURL(pending.blob); audio.play(); setRunning(true,false);
+               $("stateTxt").textContent="REVIEW"; return; }
+  if(armed >= 0 && TAPE[view][armed]) playSlot(view,armed);
+  else if(TAPE[view].length) playSlot(view, TAPE[view].length-1);   // the newest one
+});
+$("btnScrap").addEventListener("click", function(){
+  pending=null; reels(0); $("counter").textContent="00:00"; $("sizeTxt").textContent="";
+  $("stateTxt").textContent="READY"; hide(["btnKeep","btnScrap"]); $("btnRec").disabled=false; $("btnRec").classList.remove("down");
+});
+$("btnKeep").addEventListener("click", async function(){
+  if(!pending) return;
+  var at = (armed >= 0) ? armed : TAPE[me].length;      // over the chosen one, or on the end
+  await put("blobs", blobKey(me,at), pending.blob);
+  TAPE[me][at] = { title:"", dur:pending.dur, size:pending.blob.size, mime:pending.mime, at:Date.now() };
+  await saveTape();
+  var keep=at; pending=null;
+  armed = -1;                                     // ready for the next one, not on top of this
+  reels(0); $("counter").textContent="00:00"; $("sizeTxt").textContent="";
+  $("stateTxt").textContent="SAVED"; hide(["btnKeep","btnScrap"]); $("btnRec").disabled=false; $("btnRec").classList.remove("down");
+  view=me; render(); toast("Track "+(keep+1)+" saved");
+  pushTrack(me);
+});
+/* ---------- tracklist drawer ---------- */
+var drawer=$("drawer"), tabEl=$("tabTracks");
+function setDrawer(open){
+  drawer.classList.toggle("open", open);
+  tabEl.classList.toggle("open", open);
+  tabEl.setAttribute("aria-expanded", String(open));
+  if(open) drawer.removeAttribute("inert"); else drawer.setAttribute("inert","");
+}
+tabEl.addEventListener("click", function(){ setDrawer(!drawer.classList.contains("open")); });
+$("drawerClose").addEventListener("click", function(){ setDrawer(false); });
+addEventListener("keydown", function(e){ if(e.key==="Escape") setDrawer(false); });
+$("main").addEventListener("pointerdown", function(e){
+  if(!drawer.classList.contains("open")) return;
+  if(e.target.closest("#drawer") || e.target.closest("#tabTracks")) return;
+  setDrawer(false);
+}, true);
+
+$("btnExport").addEventListener("click", exportTape);
+$("btnImport").addEventListener("click", function(){ $("fileIn").click(); });
+$("fileIn").addEventListener("change", function(){ if(this.files[0]) importTape(this.files[0]); this.value=""; });
+
+})();
+</script>
+
+<script>
+/* =============================================================
+   The recorder as actual geometry. Built from primitives rather
+   than a .glb so it stays editable in one file — rounded slabs
+   via extruded shapes, cylinders for hubs and knob, and real
+   lights casting real shadows. The DOM controls above remain the
+   source of truth; the meshes just forward clicks to them.
+   ============================================================= */
+(function(){
+"use strict";
+if(!window.THREE){ document.getElementById("stage").style.display="none"; return; }
+var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+var cv = document.getElementById("stage");
+
+var renderer = new THREE.WebGLRenderer({canvas:cv, antialias:true, alpha:true});
+// A phone is a 3x screen. Capping at 2 renders it at two-thirds of native and
+// no amount of texture resolution fixes that, because the whole frame is then
+// upscaled. Aim at native; the adaptive step in the loop gives ground back only
+// if the frames genuinely cannot be held.
+var dprMax = Math.min(devicePixelRatio||1, 3);
+var dprMin = Math.min(dprMax, Math.max(1.5, dprMax*0.6));
+var dpr = dprMax;
+renderer.setPixelRatio(dpr);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.96;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+var scene = new THREE.Scene();
+
+/* A studio in a texture. This is what an .hdr file would normally provide —
+   generated here instead, so nothing extra has to ship. Without an environment
+   to reflect, plastic reads as flat CG no matter how many lights you add. */
+function studioEnv(){
+  var c=document.createElement("canvas"); c.width=768; c.height=384;
+  var g=c.getContext("2d");
+  var sky=g.createLinearGradient(0,0,0,384);
+  sky.addColorStop(0,"#ffffff"); sky.addColorStop(0.40,"#f7ece8");
+  sky.addColorStop(0.58,"#cdaea9"); sky.addColorStop(0.80,"#6d5450"); sky.addColorStop(1,"#3a2c2a");
+  g.fillStyle=sky; g.fillRect(0,0,768,384);
+  [[170,86,190],[540,70,140],[380,300,160]].forEach(function(b){
+    var rg=g.createRadialGradient(b[0],b[1],2,b[0],b[1],b[2]);
+    rg.addColorStop(0,"rgba(255,255,255,.95)"); rg.addColorStop(1,"rgba(255,255,255,0)");
+    g.fillStyle=rg; g.fillRect(b[0]-b[2],b[1]-b[2],b[2]*2,b[2]*2);
+  });
+  var tex=new THREE.CanvasTexture(c);
+  tex.mapping=THREE.EquirectangularReflectionMapping; tex.colorSpace=THREE.SRGBColorSpace;
+  var pm=new THREE.PMREMGenerator(renderer); pm.compileEquirectangularShader();
+  var env=pm.fromEquirectangular(tex).texture; pm.dispose(); tex.dispose();
+  return env;
+}
+scene.environment = studioEnv();
+
+/* micro-surface: moulded plastic scatters highlights slightly */
+function grainMap(size,amp,rep){
+  var c=document.createElement("canvas"); c.width=c.height=size;
+  var g=c.getContext("2d"), im=g.createImageData(size,size);
+  for(var i=0;i<size*size;i++){
+    var n=(Math.random()-0.5)*amp;
+    im.data[i*4]=128+n; im.data[i*4+1]=128+n; im.data[i*4+2]=255; im.data[i*4+3]=255;
+  }
+  g.putImageData(im,0,0);
+  var t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(rep,rep);
+  return t;
+}
+var GRAIN = grainMap(128, 30, 7);
+var camera = new THREE.PerspectiveCamera(29, 1.34, 0.1, 100);
+camera.position.set(0, 1.02, 7.9);
+camera.lookAt(0, -0.02, 0);
+
+/* ---- light: one key with shadows, a soft fill, a cool rim ---- */
+scene.add(new THREE.HemisphereLight(0xffeef0, 0xa07c78, 0.26));
+var key = new THREE.DirectionalLight(0xfff4ee, 2.1);
+key.position.set(-3.2, 5.2, 4.4);
+key.castShadow = true;
+key.shadow.mapSize.set(2048,2048);
+key.shadow.radius = 5;
+key.shadow.bias = -0.0009;
+var c = key.shadow.camera; c.left=-5; c.right=5; c.top=5; c.bottom=-5; c.near=0.5; c.far=18;
+scene.add(key);
+var rim = new THREE.DirectionalLight(0xcfe3ff, 0.55); rim.position.set(4.5,1.5,-3.5); scene.add(rim);
+scene.add(new THREE.AmbientLight(0xffffff, 0.04));
+
+/* ---- a surface for it to sit on, so the shadow has somewhere to land ---- */
+var ground = new THREE.Mesh(new THREE.PlaneGeometry(40,40), new THREE.ShadowMaterial({opacity:0.21}));
+ground.rotation.x = -Math.PI/2; ground.position.y = -1.72; ground.receiveShadow = true;
+scene.add(ground);
+var cshCv=document.createElement("canvas"); cshCv.width=cshCv.height=256;
+(function(){
+  var g=cshCv.getContext("2d");
+  var rg=g.createRadialGradient(128,128,10,128,128,126);
+  rg.addColorStop(0,"rgba(90,50,55,.42)"); rg.addColorStop(0.55,"rgba(90,50,55,.14)"); rg.addColorStop(1,"rgba(90,50,55,0)");
+  g.fillStyle=rg; g.fillRect(0,0,256,256);
+})();
+var contact=new THREE.Mesh(new THREE.PlaneGeometry(5.4,3.0),
+  new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cshCv),transparent:true,depthWrite:false}));
+contact.rotation.x=-Math.PI/2; contact.position.set(0,-1.70,0.30); scene.add(contact);
+
+/* ---- helpers ---- */
+function roundedShape(w,h,r){
+  var s=new THREE.Shape(), x=-w/2, y=-h/2;
+  s.moveTo(x+r,y); s.lineTo(x+w-r,y); s.quadraticCurveTo(x+w,y,x+w,y+r);
+  s.lineTo(x+w,y+h-r); s.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  s.lineTo(x+r,y+h); s.quadraticCurveTo(x,y+h,x,y+h-r);
+  s.lineTo(x,y+r); s.quadraticCurveTo(x,y,x+r,y);
+  return s;
+}
+function slabHole(w,h,d,r,iw,ih,ir,mat){
+  var sh=roundedShape(w,h,r); sh.holes.push(roundedShape(iw,ih,ir));
+  var g=new THREE.ExtrudeGeometry(sh,{depth:d,bevelEnabled:true,bevelSize:0.014,bevelThickness:0.014,bevelSegments:3,curveSegments:12});
+  g.center();
+  var m=new THREE.Mesh(g,mat); m.castShadow=true; m.receiveShadow=true; return m;
+}
+function slab(w,h,d,r,mat,bev){
+  bev = (bev===undefined) ? 0.014 : bev;
+  var g=new THREE.ExtrudeGeometry(roundedShape(w,h,r),
+    {depth:d,bevelEnabled:true,bevelSize:bev,bevelThickness:bev,bevelSegments:3,curveSegments:12});
+  g.center();
+  var m=new THREE.Mesh(g,mat); m.castShadow=true; m.receiveShadow=true; return m;
+}
+function plastic(hex,rough,opt){
+  opt = opt || {};
+  var m = new THREE.MeshPhysicalMaterial({
+    color:hex, roughness:(rough===undefined?0.52:rough), metalness:0.0,
+    clearcoat:(opt.clear===undefined?0.22:opt.clear), clearcoatRoughness:0.34,
+    envMapIntensity:(opt.env===undefined?0.38:opt.env)
+  });
+  if(opt.grain){ m.normalMap=GRAIN; m.normalScale=new THREE.Vector2(0.055,0.055); }
+  return m;
+}
+// crisp text in 3D comes from a 2D canvas used as a texture
+function decal(w,h,px,draw){
+  var cn=document.createElement("canvas"); cn.width=Math.round(w*px); cn.height=Math.round(h*px);
+  var g=cn.getContext("2d"); draw(g,cn.width,cn.height);
+  var t=new THREE.CanvasTexture(cn); t.anisotropy=8; t.colorSpace=THREE.SRGBColorSpace;
+  var m=new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({map:t,transparent:true}));
+  m.userData.ctx=g; m.userData.tex=t; m.userData.cn=cn;
+  return m;
+}
+// decal() is unlit on purpose, for text. A reel has to catch the light, so it
+// needs the same canvas trick feeding a real material instead.
+function tex(px,paint){
+  var cn=document.createElement("canvas"); cn.width=cn.height=px;
+  paint(cn.getContext("2d"), px);
+  var t=new THREE.CanvasTexture(cn); t.anisotropy=8; t.colorSpace=THREE.SRGBColorSpace;
+  return t;
+}
+
+var rig = new THREE.Group(); rig.rotation.y = -0.34; scene.add(rig);
+var BODY_D = 0.52;
+
+/* ---- body ---- */
+var body = slab(3.95, 2.92, BODY_D, 0.22, plastic(0xeeaea6,0.46,{grain:true,clear:0.30}));
+rig.add(body);
+var faceZ = BODY_D/2 + 0.016;   // bevel sits proud of the stated depth
+
+/* ---- mint lid frame, bolted at the corners ---- */
+var lid = new THREE.Group(); lid.position.set(0, 0.54, faceZ); rig.add(lid);
+var frame = slabHole(3.42, 1.62, 0.14, 0.12, 3.02, 1.26, 0.07, plastic(0xa9cfbb, 0.44, {grain:true, clear:0.30}));
+frame.position.z = 0.07; lid.add(frame);
+var well = slab(3.10, 1.34, 0.06, 0.07, plastic(0x6b564f, 0.72));   // backing plate, behind the opening
+well.position.z = -0.03; lid.add(well);
+var boltMat = new THREE.MeshStandardMaterial({color:0xd6e3d8, roughness:0.3, metalness:0.55});
+[[-1.58,0.68],[1.58,0.68],[-1.58,-0.68],[1.58,-0.68]].forEach(function(pt){
+  var b=new THREE.Mesh(new THREE.CylinderGeometry(0.062,0.062,0.05,18), boltMat);
+  b.rotation.x=Math.PI/2; b.position.set(pt[0],pt[1],0.15); b.castShadow=true; lid.add(b);
+  var slot=new THREE.Mesh(new THREE.BoxGeometry(0.072,0.014,0.01), new THREE.MeshStandardMaterial({color:0x7e9488,roughness:.6}));
+  slot.position.set(pt[0],pt[1],0.176); slot.rotation.z=0.7; lid.add(slot);
+});
+
+/* ---- the cassette, inside the well ---- */
+var tape = new THREE.Group(); tape.position.set(0,0,0.0); lid.add(tape);
+var shell = slab(2.92, 1.20, 0.05, 0.05, plastic(0xe6d3bb, 0.5), 0.008);
+tape.add(shell);
+var label = decal(2.5, 0.50, 420, function(g,w,h){
+  g.fillStyle="#fffdf9"; g.fillRect(0,0,w,h);
+  g.fillStyle="#ffd9e4"; g.fillRect(0,0,w,h*0.20);
+  g.textAlign="center";
+  g.fillStyle="#2b3a67"; g.font="600 "+Math.round(h*0.30)+"px 'Bradley Hand','Chalkboard SE',cursive";
+  g.fillText("Our mixtape", w/2, h*0.56);
+  g.strokeStyle="#ffd9e4"; g.lineWidth=2; g.setLineDash([7,7]);
+  g.beginPath(); g.moveTo(w*0.06,h*0.66); g.lineTo(w*0.94,h*0.66); g.stroke(); g.setLineDash([]);
+  g.fillStyle="#5a6b99"; g.font=Math.round(h*0.19)+"px 'Bradley Hand','Chalkboard SE',cursive";
+  g.fillText("side a · track 1", w/2, h*0.88);
+});
+label.position.set(0, 0.30, 0.050); tape.add(label);
+var win = slab(2.30, 0.56, 0.02, 0.05, plastic(0xbfa383, 0.66), 0.006);
+win.position.set(0,-0.24,0.046); tape.add(win);
+
+// cassette shell screws and the head openings along its bottom edge
+[[-1.30,0.50],[1.30,0.50],[-1.30,-0.50],[1.30,-0.50],[0,-0.02]].forEach(function(pt){
+  var sc=new THREE.Mesh(new THREE.CylinderGeometry(0.026,0.026,0.014,14), plastic(0xcbb79d,0.5));
+  sc.rotation.x=Math.PI/2; sc.position.set(pt[0],pt[1],0.038); tape.add(sc);
+});
+[[-0.30,0.11],[0,0.17],[0.30,0.11]].forEach(function(o){
+  var op=new THREE.Mesh(new THREE.BoxGeometry(o[1],0.11,0.02), plastic(0x8e7355,0.8));
+  op.position.set(o[0],-0.53,0.036); tape.add(op);
+});
+/* ---- the reels ----
+   A pack of wound tape and a hub, both painted onto cylinder caps. Nothing here
+   bakes in a highlight: a painted highlight turns with the reel, which is what
+   makes CG read as plastic. The sheen is the material catching the studio
+   environment, and it stays put while the tape turns. */
+
+// Fine wound layers, then the tape's own free end laid over them. That seam is
+// the only asymmetry on an otherwise circular object, and so the only reason a
+// spinning reel reads as spinning at all.
+var PACK_TEX = tex(512, function(g,S){
+  var C=S/2;
+  g.fillStyle="#2c2220"; g.beginPath(); g.arc(C,C,C,0,7); g.fill();
+  // a pack of tape is domed, not flat: dark where it meets the hub, opening up
+  // towards the rim. At this size that shading does more work than the layers.
+  var rg=g.createRadialGradient(C,C,C*0.14,C,C,C);
+  rg.addColorStop(0,"rgba(0,0,0,.55)"); rg.addColorStop(0.45,"rgba(0,0,0,.10)");
+  rg.addColorStop(1,"rgba(168,144,130,.22)");
+  g.fillStyle=rg; g.beginPath(); g.arc(C,C,C,0,7); g.fill();
+  // layers spaced wide enough to survive the reel being ~100px across: at the
+  // density a real pack has they average to a flat disc once downscaled
+  g.lineWidth=S*0.010;
+  for(var r=C*0.985; r>C*0.15; r-=S*0.026){
+    g.strokeStyle="rgba(152,127,114,"+(0.24+0.30*(r/C))+")";
+    g.beginPath(); g.arc(C,C,r,0,7); g.stroke();
+  }
+  g.strokeStyle="#7d6a60"; g.lineWidth=S*0.008;
+  g.beginPath(); g.arc(C,C,C*0.985,0,7); g.stroke();
+  g.save(); g.translate(C,C);
+  g.strokeStyle="rgba(0,0,0,.42)"; g.lineWidth=S*0.013;
+  g.beginPath(); g.moveTo(C*0.58,S*0.008); g.lineTo(C*0.985,S*0.008); g.stroke();
+  g.strokeStyle="#a89083"; g.lineWidth=S*0.009; g.lineCap="round";
+  g.beginPath(); g.moveTo(C*0.60,0); g.lineTo(C*0.975,0); g.stroke();
+  g.restore();
+});
+
+// A real Type-I hub: a cream flange, six teeth reaching in at the drive
+// spindle, and the clamp that holds the tape's end. Six teeth alone are
+// six-fold symmetric and would read as standing still; the clamp breaks it.
+var HUB_TEX = tex(384, function(g,S){
+  var C=S/2;
+  g.fillStyle="#f7efe4"; g.beginPath(); g.arc(C,C,C,0,7); g.fill();
+  g.strokeStyle="rgba(120,98,90,.30)"; g.lineWidth=S*0.012;
+  g.beginPath(); g.arc(C,C,C*0.93,0,7); g.stroke();
+  g.fillStyle="#241c1a"; g.beginPath(); g.arc(C,C,C*0.58,0,7); g.fill();
+  g.fillStyle="#efe2d2";
+  for(var i=0;i<6;i++){
+    g.save(); g.translate(C,C); g.rotate(i*Math.PI/3);
+    g.beginPath();
+    g.moveTo(C*0.60,-C*0.115); g.lineTo(C*0.27,-C*0.055);
+    g.lineTo(C*0.27, C*0.055); g.lineTo(C*0.60, C*0.115);
+    g.closePath(); g.fill();
+    g.restore();
+  }
+  g.save(); g.translate(C,C); g.rotate(-0.62);
+  g.fillStyle="#b4235c"; g.fillRect(C*0.64,-C*0.055,C*0.30,C*0.11);
+  g.restore();
+});
+
+var PACK_CAP = new THREE.MeshPhysicalMaterial({map:PACK_TEX, roughness:0.30, metalness:0,
+  clearcoat:0.38, clearcoatRoughness:0.22, envMapIntensity:0.42});
+var PACK_SIDE = plastic(0x231b19, 0.62);
+var HUB_CAP = new THREE.MeshPhysicalMaterial({map:HUB_TEX, roughness:0.44, metalness:0,
+  clearcoat:0.30, clearcoatRoughness:0.30, envMapIntensity:0.40});
+var HUB_SIDE = plastic(0xe8dccd, 0.50);
+
+var REEL = [], SPOOL = [];
+[-0.58, 0.58].forEach(function(x,i){
+  // pack and hub share one group, so the seam and the clamp stay locked
+  // together the way tape and hub actually are
+  var reel = new THREE.Group(); reel.position.set(x,-0.24,0.072); tape.add(reel); REEL.push(reel);
+  var sp = new THREE.Mesh(new THREE.CylinderGeometry(1,1,0.05,60), [PACK_SIDE,PACK_CAP,PACK_CAP]);
+  sp.rotation.x=Math.PI/2; sp.position.z=0.006; reel.add(sp); SPOOL.push(sp);
+  var flange = new THREE.Mesh(new THREE.CylinderGeometry(0.108,0.108,0.030,40), [HUB_SIDE,HUB_CAP,HUB_CAP]);
+  flange.rotation.x=Math.PI/2; flange.position.z=0.026; reel.add(flange);
+});
+
+/* ---- smoked lid over the compartment ---- */
+var smoke = new THREE.Mesh(new THREE.BoxGeometry(3.02,1.26,0.022),
+  new THREE.MeshPhysicalMaterial({color:0x6a5450, transparent:true, opacity:0.15,
+    roughness:0.04, metalness:0, clearcoat:1, clearcoatRoughness:0.03, envMapIntensity:0.9}));
+smoke.position.set(0,0,0.125); lid.add(smoke);
+
+/* ---- LCD ---- */
+var lcdMesh = decal(1.90, 0.38, 440, function(){});
+lcdMesh.position.set(-0.90, -0.54, faceZ+0.052); rig.add(lcdMesh);
+var lcdWell = slab(2.00, 0.46, 0.04, 0.05, plastic(0x33423c, 0.55), 0.008);
+lcdWell.position.set(-0.90,-0.54,faceZ+0.018); rig.add(lcdWell);
+// The meter moves every frame; the text changes about once a second. Drawing
+// both together would mean re-laying out five strings sixty times a second, so
+// the text is cached into its own canvas and the frame only composites.
+var lcdBase = document.createElement("canvas");
+(function(){ var cn=lcdMesh.userData.cn; lcdBase.width=cn.width; lcdBase.height=cn.height; })();
+function paintLCD(){
+  var cn=lcdMesh.userData.cn, w=cn.width, h=cn.height, g=lcdBase.getContext("2d");
+  var grd=g.createLinearGradient(0,0,0,h); grd.addColorStop(0,"#41514a"); grd.addColorStop(1,"#2b3833");
+  g.fillStyle=grd; g.fillRect(0,0,w,h);
+  var rec = document.getElementById("deck").classList.contains("is-rec");
+  g.beginPath(); g.arc(h*0.42, h*0.5, h*0.11, 0, 7);
+  g.fillStyle = rec ? ((held && !lampOn) ? "#5e4148" : "#ff5d7a") : "#7a5a62"; g.fill();
+  g.textAlign="left"; g.fillStyle="#9fd6bc";
+  g.font="600 "+Math.round(h*0.26)+"px ui-monospace,Menlo,monospace";
+  g.fillText((document.getElementById("stateTxt").textContent||"").trim(), h*0.68, h*0.52);
+  g.textAlign="center"; g.fillStyle="#cff3e2";
+  g.font="600 "+Math.round(h*0.42)+"px ui-monospace,Menlo,monospace";
+  g.fillText(document.getElementById("counter").textContent, w*0.60, h*0.56);
+  g.textAlign="right"; g.fillStyle="#7fb49c"; g.font=Math.round(h*0.20)+"px ui-monospace,Menlo,monospace";
+  g.fillText(document.getElementById("sizeTxt").textContent||"", w-h*0.3, h*0.54);
+  drawLCD();
+}
+// A segmented level meter along the bottom of the display: green up to about
+// two thirds, amber, then red for the last two. `peak` falls slower than the
+// bar so a loud moment leaves a mark, the way a real meter's needle hangs.
+var LCD_SEGS = 22, vuLevel = 0, vuPeak = 0;
+function drawLCD(){
+  var u=lcdMesh.userData, g=u.ctx, w=u.cn.width, h=u.cn.height;
+  g.clearRect(0,0,w,h);
+  g.drawImage(lcdBase,0,0);
+  var x0=h*0.68, x1=w-h*0.30, y=h*0.80, bh=h*0.16;
+  var gap=(x1-x0)/LCD_SEGS, sw=gap*0.62;
+  for(var i=0;i<LCD_SEGS;i++){
+    var t=(i+1)/LCD_SEGS;
+    var lit = vuLevel >= t - 0.0001;
+    var isPeak = vuPeak > 0 && Math.abs(vuPeak - t) < 0.5/LCD_SEGS;
+    var col = t > 0.90 ? "#ff6b6b" : (t > 0.72 ? "#ffc46b" : "#7fe3b0");
+    g.fillStyle = (lit || isPeak) ? col : "rgba(255,255,255,.07)";
+    g.fillRect(x0+i*gap, y, sw, bh);
+  }
+  u.tex.needsUpdate=true;
+}
+
+/* ---- keys ---- */
+/* Screen-printed legends. The old mauve was only a shade off the body it sat
+   on, which is fine on a mock-up and useless on a phone. These are painted at
+   roughly twice the pixels they are drawn at, so the strokes stay sharp. */
+var LEGEND="#4d2732", LEGEND_PX=560;
+
+var KEYS=[], KEY_X0=-1.515, KEY_DX=0.505;
+var keyDefs=[["btnRec","rec",0xb4235c],["btnPlay","play",0x6b4f58],
+             ["btnPause","pause",0x6b4f58],["btnStop","stop",0x6b4f58]];
+keyDefs.forEach(function(d,i){
+  var x=KEY_X0+i*KEY_DX;
+  var g=new THREE.Group(); g.position.set(x, -1.18, faceZ); rig.add(g);
+  var k=slab(0.44,0.36,0.17,0.05, plastic(0xf7e4dc,0.34,{clear:0.40}));
+  k.position.z=0.085; g.add(k);
+  var ic=decal(0.30,0.22,340,function(ctx,w,h){
+    ctx.clearRect(0,0,w,h); ctx.fillStyle="#"+d[2].toString(16).padStart(6,"0");
+    if(d[1]==="pause"){                       // drawn, not typed: no pause glyph
+      var bw=w*0.15, gap=w*0.14, bh=h*0.62;   // sits on the same baseline as ▶
+      ctx.fillRect(w/2-gap/2-bw, (h-bh)/2, bw, bh);
+      ctx.fillRect(w/2+gap/2,    (h-bh)/2, bw, bh);
+    }else{
+      ctx.textAlign="center"; ctx.font="600 "+Math.round(h*0.8)+"px system-ui";
+      ctx.fillText(d[1]==="rec"?"●":d[1]==="play"?"▶":"■", w/2, h*0.80);
+    }
+  });
+  ic.position.set(0,0,0.196); g.add(ic);
+  var cap=decal(0.48,0.14,LEGEND_PX,function(ctx,w,h){
+    ctx.clearRect(0,0,w,h); ctx.fillStyle=LEGEND; ctx.textAlign="center";
+    ctx.font="700 "+Math.round(h*0.60)+"px ui-monospace,Menlo,monospace";
+    // caps this small need air between them; ignored where unsupported
+    ctx.letterSpacing = Math.round(h*0.07)+"px";
+    ctx.fillText(d[1].toUpperCase(), w/2, h*0.74);
+  });
+  cap.position.set(x, -0.92, faceZ+0.012); rig.add(cap);
+  KEYS.push({g:g, mesh:k, id:d[0], rest:0, down:false, latched:false});
+});
+
+/* ---- knob ---- */
+var knobG=new THREE.Group(); knobG.position.set(1.28,-0.88,faceZ); rig.add(knobG);
+var knurl=new THREE.Mesh(new THREE.CylinderGeometry(0.30,0.30,0.19,44), plastic(0xe3a8a2,0.40,{clear:0.38}));
+knurl.rotation.x=Math.PI/2; knurl.position.z=0.095; knurl.castShadow=true; knobG.add(knurl);
+for(var r=0;r<36;r++){
+  var ridge=new THREE.Mesh(new THREE.BoxGeometry(0.022,0.05,0.19), plastic(0xf7d7d1,0.4));
+  ridge.position.set(Math.cos(r*Math.PI/18)*0.30, Math.sin(r*Math.PI/18)*0.30, 0.095);
+  ridge.rotation.z = r*Math.PI/18; knobG.add(ridge);
+}
+var face=new THREE.Mesh(new THREE.CylinderGeometry(0.21,0.21,0.06,32), plastic(0xfbe6e2,0.3));
+face.rotation.x=Math.PI/2; face.position.z=0.20; knobG.add(face);
+var mark=new THREE.Mesh(new THREE.BoxGeometry(0.035,0.11,0.03), plastic(0xb4235c,0.4));
+mark.position.set(0,0.12,0.225); knobG.add(mark);
+var sideCap=decal(0.62,0.14,LEGEND_PX,function(){});
+sideCap.position.set(1.28,-1.30,faceZ+0.012); rig.add(sideCap);
+function paintSide(){
+  var g=sideCap.userData.ctx, cn=sideCap.userData.cn;
+  g.clearRect(0,0,cn.width,cn.height); g.fillStyle=LEGEND; g.textAlign="center";
+  g.font="700 "+Math.round(cn.height*0.58)+"px ui-monospace,Menlo,monospace";
+  g.letterSpacing = Math.round(cn.height*0.07)+"px";
+  g.fillText(document.getElementById("sideLbl").textContent, cn.width/2, cn.height*0.74);
+  sideCap.userData.tex.needsUpdate=true;
+}
+
+/* ---- vents + printed brand ---- */
+for(var gx=0; gx<4; gx++) for(var gy=0; gy<3; gy++){
+  var hole=new THREE.Mesh(new THREE.CylinderGeometry(0.026,0.026,0.05,12), plastic(0x8f6864,0.85,{clear:0}));
+  hole.rotation.x=Math.PI/2;
+  hole.position.set(0.36+gx*0.095, -0.40-gy*0.095, faceZ-0.004); rig.add(hole);
+}
+
+
+/* ---- the back: battery door, plate and feet ---- */
+var backZ = -(BODY_D/2 + 0.016);
+var door = slab(2.30, 1.52, 0.05, 0.12, plastic(0xe6aaa2, 0.52, {grain:true, clear:0.26}), 0.012);
+door.position.set(0, 0.26, backZ - 0.028); rig.add(door);
+var doorLip = slab(2.42, 1.64, 0.02, 0.13, plastic(0xd99c94, 0.6), 0.008);
+doorLip.position.set(0, 0.26, backZ - 0.012); rig.add(doorLip);
+var latch = new THREE.Mesh(new THREE.BoxGeometry(0.42,0.10,0.05), plastic(0xd08e86,0.55));
+latch.position.set(0, -0.42, backZ - 0.056); rig.add(latch);
+[[-0.92,0.94],[0.92,0.94]].forEach(function(pt){
+  var sc=new THREE.Mesh(new THREE.CylinderGeometry(0.055,0.055,0.04,16), boltMat);
+  sc.rotation.x=Math.PI/2; sc.position.set(pt[0],pt[1],backZ-0.05); rig.add(sc);
+});
+var plate = decal(2.0, 0.46, 360, function(g,w,h){
+  g.clearRect(0,0,w,h);
+  g.fillStyle="rgba(255,255,255,.55)"; g.fillRect(0,0,w,h);
+  g.textAlign="center"; g.fillStyle="#9c6f74";
+  g.font="600 "+Math.round(h*0.30)+"px ui-monospace,Menlo,monospace";
+  g.fillText("OUR MIXTAPE · SB-01", w/2, h*0.42);
+  g.font=Math.round(h*0.21)+"px ui-monospace,Menlo,monospace";
+  g.fillText("made at my desk · not for resale", w/2, h*0.78);
+});
+plate.position.set(0, -0.92, backZ - 0.020); plate.rotation.y = Math.PI; rig.add(plate);
+// A mixtape's tracklist is written on the paper card in the case, not on the
+// shell. The deck turns a full 360, so the back is where it belongs.
+var card = decal(2.06, 1.30, 420, function(){});
+// clear of the door (its bevel reaches backZ-0.065) and the latch (backZ-0.081),
+// so the card sits on the outside the way a paper insert actually would
+card.position.set(0, 0.30, backZ - 0.092);
+card.rotation.y = Math.PI;      // it faces out of the back
+card.rotation.z = 0.013;        // paper, tucked in slightly askew
+rig.add(card);
+var CARD_MAX = 8;      // how many lines the paper J-card has room for
+var cardWas = null;
+function paintCard(){
+  var sig = (document.getElementById("cardA")||{}).textContent + "\u001f" +
+            (document.getElementById("cardB")||{}).textContent;
+  if(sig === cardWas) return;
+  cardWas = sig;
+  var g=card.userData.ctx, cn=card.userData.cn, w=cn.width, h=cn.height;
+  g.clearRect(0,0,w,h);
+  g.fillStyle="#FFFCF7"; g.fillRect(0,0,w,h);
+  g.strokeStyle="rgba(150,116,110,.30)"; g.lineWidth=Math.max(1,h*0.008);
+  g.strokeRect(h*0.02,h*0.02,w-h*0.04,h-h*0.04);
+  g.fillStyle="#FFD9E4"; g.fillRect(0,0,w,h*0.115);
+  g.textAlign="center"; g.fillStyle="#B4235C";
+  g.font="600 "+Math.round(h*0.068)+"px ui-monospace,Menlo,monospace";
+  g.letterSpacing = Math.round(h*0.012)+"px";
+  g.fillText("OUR MIXTAPE", w/2, h*0.083);
+  g.letterSpacing = "0px";
+  // a rule down the middle, one column per side
+  g.strokeStyle="rgba(255,217,228,.9)"; g.lineWidth=Math.max(1,h*0.006);
+  g.beginPath(); g.moveTo(w/2, h*0.17); g.lineTo(w/2, h*0.94); g.stroke();
+  [["A", document.getElementById("cardA"), 0],
+   ["B", document.getElementById("cardB"), 1]].forEach(function(col){
+    var x0 = col[2] ? w/2 : 0, cw = w/2;
+    var names = (col[1] ? col[1].textContent : "").split("|");
+    g.textAlign="left"; g.fillStyle="#8A5A62";
+    g.font="600 "+Math.round(h*0.055)+"px ui-monospace,Menlo,monospace";
+    g.fillText("SIDE "+col[0], x0+cw*0.09, h*0.215);
+    // paper runs out before the tape does: list what fits, then say how many
+    // more there are
+    var shown = Math.min(names.length, CARD_MAX);
+    var extra = names.length - shown;
+    for(var i=0;i<CARD_MAX;i++){
+      var y = h*(0.300 + i*0.082);
+      if(i === CARD_MAX-1 && extra > 0){
+        g.textAlign="left"; g.fillStyle="#B4235C";
+        g.font="600 "+Math.round(h*0.045)+"px ui-monospace,Menlo,monospace";
+        g.fillText("+"+(extra+1)+" more", x0+cw*0.09, y);
+        break;
+      }
+      g.fillStyle="#C6B4AB";
+      g.font=Math.round(h*0.048)+"px ui-monospace,Menlo,monospace";
+      g.fillText(String(i+1).padStart(2,"0"), x0+cw*0.09, y);
+      if(i >= names.length) continue;
+      var name = (names[i]||"").trim();
+      if(name === "\u0001"){
+        g.strokeStyle="rgba(120,98,90,.45)"; g.lineWidth=Math.max(1,h*0.005);
+        g.beginPath(); g.moveTo(x0+cw*0.24, y-h*0.012); g.lineTo(x0+cw*0.86, y-h*0.012); g.stroke();
+      }else if(name){
+        g.fillStyle="#2B3A67";
+        g.font=Math.round(h*0.070)+"px 'Bradley Hand','Chalkboard SE',cursive";
+        var max = cw*0.72;
+        while(g.measureText(name).width > max && name.length > 1) name = name.slice(0,-1);
+        if(name !== (names[i]||"").trim()) name = name.slice(0,-1)+"…";
+        g.fillText(name, x0+cw*0.21, y+h*0.008);
+      }else{
+        g.strokeStyle="rgba(200,184,176,.75)"; g.lineWidth=Math.max(1,h*0.004);
+        g.setLineDash([h*0.02,h*0.022]);
+        g.beginPath(); g.moveTo(x0+cw*0.24, y-h*0.012); g.lineTo(x0+cw*0.86, y-h*0.012); g.stroke();
+        g.setLineDash([]);
+      }
+    }
+  });
+  card.userData.tex.needsUpdate=true;
+}
+
+[[-1.62,-1.16],[1.62,-1.16],[-1.62,1.16],[1.62,1.16]].forEach(function(f){
+  var foot=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.13,0.05,20), plastic(0x7d5b58,0.85,{clear:0}));
+  foot.rotation.x=Math.PI/2; foot.position.set(f[0],f[1],backZ-0.03); foot.castShadow=true; rig.add(foot);
+});
+
+/* ---- interaction ---- */
+var ray=new THREE.Raycaster(), ptr=new THREE.Vector2();
+var dragging=false, lastX=0, lastY=0, velY=0, touched=false, baseTilt=-0.10;
+function hit(ev){
+  var r=cv.getBoundingClientRect();
+  ptr.x=((ev.clientX-r.left)/r.width)*2-1; ptr.y=-((ev.clientY-r.top)/r.height)*2+1;
+  ray.setFromCamera(ptr,camera);
+  var targets=KEYS.map(function(k){return k.mesh;}).concat([knurl,face]);
+  var is=ray.intersectObjects(targets,true);
+  if(!is.length) return null;
+  var o=is[0].object;
+  for(var i=0;i<KEYS.length;i++) if(KEYS[i].mesh===o) return KEYS[i];
+  return "knob";
+}
+function markTouched(){
+  if(touched) return;
+  touched=true;
+  var h=document.getElementById("hint3d"); if(h) h.classList.add("gone");
+}
+cv.addEventListener("pointerdown",function(ev){
+  var h=hit(ev);
+  if(h){                                   // a control was pressed, not the body
+    markTouched();
+    if(h==="knob"){ document.getElementById("knob").click(); return; }
+    h.down=true; document.getElementById(h.id).click(); return;
+  }
+  dragging=true; velY=0; lastX=ev.clientX; lastY=ev.clientY;
+  cv.classList.add("grabbing");
+  try{ cv.setPointerCapture(ev.pointerId); }catch(e){}
+  markTouched();
+});
+cv.addEventListener("pointermove",function(ev){
+  if(!dragging) return;
+  var dx=ev.clientX-lastX, dy=ev.clientY-lastY;
+  lastX=ev.clientX; lastY=ev.clientY;
+  velY = dx*0.0085;
+  rig.rotation.y += velY;                                  // a full 360, both ways
+  baseTilt = Math.max(-0.62, Math.min(0.62, baseTilt + dy*0.0045));
+});
+function endDrag(){ dragging=false; cv.classList.remove("grabbing"); }
+cv.addEventListener("pointerup",function(){ endDrag(); KEYS.forEach(function(k){k.down=false;}); });
+cv.addEventListener("pointercancel",endDrag);
+addEventListener("pointerup",function(){ KEYS.forEach(function(k){k.down=false;}); });
+
+/* ---- state from the DOM ---- */
+var RMIN=0.205, RMAX=0.255, prog=0, spinning=false, recording=false, held=false, lampOn=true, knobTurn=0;
+function applyReels(){
+  SPOOL[0].scale.set(RMAX-(RMAX-RMIN)*prog, 1, RMAX-(RMAX-RMIN)*prog);
+  SPOOL[1].scale.set(RMIN+(RMAX-RMIN)*prog, 1, RMIN+(RMAX-RMIN)*prog);
+}
+window.TAPE3D = {
+  reels:function(p){ prog=p; applyReels(); },
+  running:function(on,rec,hold){ spinning=on; recording=rec; held=!!hold; lampOn=true; paintLCD(); },
+  // the page owns the audio; the deck only needs the number
+  level:function(v){ vuLevel = v; },
+  // a latched key stays down, the way a real PAUSE or REC key does
+  latch:function(id,on){ KEYS.forEach(function(k){ if(k.id===id) k.latched=!!on; }); },
+  side:function(v){ knobTurn = (v==="B") ? Math.PI : 0; paintSide(); paintLabel(); },
+  // does the whole object still project inside the frame at the current angle?
+  fits:function(){
+    var box=new THREE.Box3().setFromObject(rig), mn=box.min, mx=box.max, worst=0;
+    for(var i=0;i<8;i++){
+      var v=new THREE.Vector3(i&1?mx.x:mn.x, i&2?mx.y:mn.y, i&4?mx.z:mn.z).project(camera);
+      worst=Math.max(worst, Math.abs(v.x), Math.abs(v.y));
+    }
+    return {ok:worst<=1, worst:+worst.toFixed(3)};
+  },
+  spin:function(y){ rig.rotation.y=y; renderer.render(scene,camera); },
+  // read-only peek at the scene, so motion can be asserted rather than eyeballed
+  peek:function(){ return {fps:fps, frames:frames, dpr:dpr, dprMin:dprMin, dprMax:dprMax, spin:REEL[0].rotation.z, rigY:rig.rotation.y, rigX:rig.rotation.x, prog:prog, knob:knobG.rotation.z,
+                           keyZ:KEYS.map(function(k){return +k.g.position.z.toFixed(3);})}; }
+};
+function paintLabel(){
+  var g=label.userData.ctx, cn=label.userData.cn, w=cn.width, h=cn.height;
+  g.fillStyle="#fffdf9"; g.fillRect(0,0,w,h);
+  g.fillStyle="#ffd9e4"; g.fillRect(0,0,w,h*0.20);
+  g.textAlign="center";
+  g.fillStyle="#2b3a67"; g.font="600 "+Math.round(h*0.30)+"px 'Bradley Hand','Chalkboard SE',cursive";
+  g.fillText(document.getElementById("labTop").textContent, w/2, h*0.56);
+  g.strokeStyle="#ffd9e4"; g.lineWidth=2; g.setLineDash([7,7]);
+  g.beginPath(); g.moveTo(w*0.06,h*0.66); g.lineTo(w*0.94,h*0.66); g.stroke(); g.setLineDash([]);
+  g.fillStyle="#5a6b99"; g.font=Math.round(h*0.19)+"px 'Bradley Hand','Chalkboard SE',cursive";
+  g.fillText(document.getElementById("labSub").textContent, w/2, h*0.88);
+  label.userData.tex.needsUpdate=true;
+}
+new MutationObserver(function(){ paintLCD(); paintLabel(); paintSide(); paintCard(); })
+  .observe(document.querySelector(".sr"), {subtree:true, childList:true, characterData:true});
+
+/* ---- resize + loop ---- */
+/* Frame to the object's bounding sphere. A sphere does not change shape as the
+   object turns, so one distance is correct at every angle — fitting to the
+   bounding box would clip the moment you rotated off-axis. */
+var fitSphere=null, fitDir=new THREE.Vector3(0,0.17,1).normalize();
+function frameCamera(){
+  if(!fitSphere){
+    var ky=rig.rotation.y, kx=rig.rotation.x, kp=rig.position.y;
+    rig.rotation.set(0,0,0); rig.position.y=0; rig.updateMatrixWorld(true);
+    fitSphere=new THREE.Box3().setFromObject(rig).getBoundingSphere(new THREE.Sphere());
+    rig.rotation.set(kx,ky,0); rig.position.y=kp;
+  }
+  var vFov=camera.fov*Math.PI/180;
+  var hFov=2*Math.atan(Math.tan(vFov/2)*camera.aspect);
+  var d=fitSphere.radius/Math.sin(Math.min(vFov,hFov)/2)*1.04;
+  camera.position.copy(fitSphere.center).add(fitDir.clone().multiplyScalar(d));
+  camera.lookAt(fitSphere.center);
+}
+function resize(){
+  // Measure the box; do not compute it. Deriving the height from the width
+  // pinned the buffer to one aspect ratio and stretched it into whatever shape
+  // the layout actually had.
+  var w = cv.clientWidth || cv.parentNode.clientWidth || 0;
+  var h = cv.clientHeight || cv.parentNode.clientHeight || 0;
+  if(w < 2 || h < 2) return;              // still hidden behind the gate
+  renderer.setSize(w,h,false);
+  camera.aspect=w/h; camera.updateProjectionMatrix();
+  frameCamera();
+}
+addEventListener("resize",resize);
+// the stage starts inside a hidden panel, so it has no width until the gate
+// opens; observing the box is more reliable than guessing when that happens
+if(window.ResizeObserver) new ResizeObserver(resize).observe(cv.parentNode);
+applyReels(); paintLCD(); paintLabel(); paintSide(); paintCard(); resize();
+var last=performance.now(), frames=0, fps=0, fpsT=last, secs=0;
+// Quality has to be able to come back. The old rule only ever stepped down, so a
+// single slow second — and the first seconds are always slow, that is shader
+// compiling and textures uploading — left the deck soft for the rest of the
+// session. On a 3x phone that meant rendering at a third of the screen.
+(function loop(now){
+  var dt=Math.min(0.05,(now-last)/1000); last=now; frames++;
+  if(now-fpsT>1000){
+    fps=Math.round(frames*1000/(now-fpsT)); frames=0; fpsT=now; secs++;
+    if(secs > 3){                                   // let it warm up first
+      if(fps > 0 && fps < 30 && dpr > dprMin){
+        dpr = Math.max(dprMin, dpr - 0.25); renderer.setPixelRatio(dpr);
+      }else if(fps > 52 && dpr < dprMax){
+        dpr = Math.min(dprMax, dpr + 0.25); renderer.setPixelRatio(dpr);
+      }
+    }
+  }
+  if(spinning && !reduce){ REEL[0].rotation.z-=dt*2.4; REEL[1].rotation.z-=dt*2.4; }
+  if(!dragging){
+    rig.rotation.y += velY; velY *= 0.94;                  // only your own momentum, spinning down
+    if(Math.abs(velY) < 0.0004) velY = 0;                  // and it genuinely comes to rest
+  }
+  rig.rotation.x += (baseTilt - rig.rotation.x)*0.10;
+  if(!reduce) rig.position.y = Math.sin(now*0.0011)*0.055;  // it floats
+  knobG.rotation.z += (knobTurn-knobG.rotation.z)*0.22;
+  if(held){                                  // blink the lamp while on hold
+    var b=Math.floor(now/460)%2===0;
+    if(b!==lampOn){ lampOn=b; paintLCD(); }
+  }
+  if(vuLevel > 0 || vuPeak > 0){
+    vuLevel = Math.max(0, vuLevel - dt*1.6);          // decay if nothing feeds it
+    vuPeak  = (vuLevel > vuPeak) ? vuLevel : Math.max(0, vuPeak - dt*0.45);
+    drawLCD();
+  }
+  KEYS.forEach(function(k){ var t=(k.down||k.latched)?-0.075:0; k.g.position.z += (faceZ+t-k.g.position.z)*0.35; });
+  renderer.render(scene,camera);
+  requestAnimationFrame(loop);
+})(last);
+})();
+</script>
+</body>
+</html>
